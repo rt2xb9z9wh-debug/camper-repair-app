@@ -1,0 +1,258 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#f3f6f9" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="CamperFix" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta
+      name="description"
+      content="Mobile Arbeits-App fuer Campervan-Schadenaufnahme, Reparaturstatus und Materialplanung."
+    />
+    <title>CamperFix</title>
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="icon" href="icon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="icon.svg" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="phone-shell" aria-label="CamperFix Arbeits-App">
+      <section class="screen">
+        <header class="topbar">
+          <div>
+            <p class="eyebrow" id="todayLabel">Heute</p>
+            <h1>CamperFix</h1>
+          </div>
+          <button class="icon-button" type="button" aria-label="Synchronisieren" id="syncButton">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M21 12a9 9 0 0 1-15.2 6.5" />
+              <path d="M3 12A9 9 0 0 1 18.2 5.5" />
+              <path d="M18 2v4h-4" />
+              <path d="M6 22v-4h4" />
+            </svg>
+          </button>
+        </header>
+
+        <section class="status-strip">
+          <div>
+            <span>Letztes Update</span>
+            <strong id="lastUpdate">16:49</strong>
+          </div>
+          <div>
+            <span>Offline bereit</span>
+            <strong>8 Aufträge</strong>
+          </div>
+        </section>
+
+        <nav class="quick-actions" aria-label="Schnellaktionen">
+          <button type="button" class="action-card active" data-action="damage">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M12 5v14" />
+              <path d="M5 12h14" />
+            </svg>
+            <span>Schaden</span>
+          </button>
+          <button type="button" class="action-card" data-action="photo">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M4 8h3l2-3h6l2 3h3v11H4z" />
+              <circle cx="12" cy="13" r="3.5" />
+            </svg>
+            <span>Fotos</span>
+          </button>
+          <button type="button" class="action-card" data-action="parts">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M14 7 7 14" />
+              <path d="m8 6 10 10" />
+              <path d="M5 19h14" />
+            </svg>
+            <span>Material</span>
+          </button>
+        </nav>
+
+        <section class="grid">
+          <article class="metric-card warning">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M12 8v5" />
+              <path d="M12 17h.01" />
+              <path d="M10.3 3.9 2.6 17.3A2 2 0 0 0 4.3 20h15.4a2 2 0 0 0 1.7-2.7L13.7 3.9a2 2 0 0 0-3.4 0Z" />
+            </svg>
+            <div>
+              <h2>Freigabe</h2>
+              <strong>OFFEN</strong>
+              <span>Kunde wartet</span>
+            </div>
+          </article>
+
+          <article class="metric-card success">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M20 6 9 17l-5-5" />
+            </svg>
+            <div>
+              <h2>Erledigt</h2>
+              <strong>3/7</strong>
+              <span>Heute abgeschlossen</span>
+            </div>
+          </article>
+
+          <article class="metric-card success">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M6 3v18" />
+              <path d="M18 3v18" />
+              <path d="M6 8h12" />
+              <path d="M6 16h12" />
+            </svg>
+            <div>
+              <h2>Arbeitszeit</h2>
+              <strong>5:40 h</strong>
+              <span>Geplant 7:30h</span>
+            </div>
+          </article>
+
+          <article class="metric-card neutral">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M3 7h18" />
+              <path d="M7 7v14" />
+              <path d="M17 7v14" />
+              <path d="M5 21h14" />
+              <path d="M8 3h8l2 4H6z" />
+            </svg>
+            <div>
+              <h2>Teile</h2>
+              <strong>2 fehlen</strong>
+              <span>Dichtband, Clips</span>
+            </div>
+          </article>
+        </section>
+
+        <section class="active-job">
+          <div class="job-head">
+            <div>
+              <p>Aktueller Auftrag</p>
+              <h2>Sunlight Cliff 600</h2>
+            </div>
+            <span class="pill">Priorität</span>
+          </div>
+
+          <div class="van-visual" role="img" aria-label="Campervan mit markierten Schadstellen">
+            <div class="van-body">
+              <span class="damage-dot dot-roof"></span>
+              <span class="damage-dot dot-door"></span>
+              <span class="damage-dot dot-rear"></span>
+              <div class="window front"></div>
+              <div class="window rear"></div>
+              <div class="wheel left"></div>
+              <div class="wheel right"></div>
+            </div>
+          </div>
+
+          <div class="job-stats">
+            <div>
+              <span>Schaden</span>
+              <strong>Seitenwand rechts</strong>
+            </div>
+            <div>
+              <span>Nächster Schritt</span>
+              <strong>Spachteln</strong>
+            </div>
+          </div>
+        </section>
+
+        <section class="detail-panel" id="detailPanel">
+          <div class="panel-head">
+            <h2>Schaden erfassen</h2>
+            <span>Neu</span>
+          </div>
+          <label>
+            Bereich
+            <select id="areaSelect">
+              <option>Seitenwand rechts</option>
+              <option>Dach</option>
+              <option>Heckklappe</option>
+              <option>Innenausbau</option>
+            </select>
+          </label>
+          <label>
+            Reparaturstatus
+            <select id="statusSelect">
+              <option>Prüfen</option>
+              <option>Demontage</option>
+              <option>Spachteln</option>
+              <option>Lack vorbereiten</option>
+              <option>Fertig</option>
+            </select>
+          </label>
+          <div class="segmented" role="group" aria-label="Schweregrad">
+            <button type="button">Leicht</button>
+            <button type="button" class="selected">Mittel</button>
+            <button type="button">Stark</button>
+          </div>
+          <button class="primary-button" type="button" id="saveDamage">Eintrag lokal speichern</button>
+        </section>
+
+        <section class="timeline">
+          <h2>Tagesplan</h2>
+          <article>
+            <time>08:30</time>
+            <div>
+              <strong>Fotos vor Reparatur</strong>
+              <span>12 Bilder hinterlegt</span>
+            </div>
+          </article>
+          <article>
+            <time>11:15</time>
+            <div>
+              <strong>Kostenschätzung</strong>
+              <span>Wartet auf Kundenfreigabe</span>
+            </div>
+          </article>
+          <article>
+            <time>14:00</time>
+            <div>
+              <strong>Material prüfen</strong>
+              <span>Dichtband nachbestellen</span>
+            </div>
+          </article>
+        </section>
+      </section>
+
+      <nav class="bottom-nav" aria-label="Hauptnavigation">
+        <button type="button" class="nav-item active" data-view="auftraege">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M4 6h16" />
+            <path d="M4 12h16" />
+            <path d="M4 18h10" />
+          </svg>
+          <span>Aufträge</span>
+        </button>
+        <button type="button" class="nav-item" data-view="schaeden">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M12 3 3 21h18z" />
+            <path d="M12 9v5" />
+            <path d="M12 17h.01" />
+          </svg>
+          <span>Schäden</span>
+        </button>
+        <button type="button" class="nav-item" data-view="kunden">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="12" cy="8" r="4" />
+            <path d="M4 21a8 8 0 0 1 16 0" />
+          </svg>
+          <span>Kunden</span>
+        </button>
+        <button type="button" class="nav-item" data-view="lager">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M3 7 12 3l9 4-9 4z" />
+            <path d="M3 7v10l9 4 9-4V7" />
+            <path d="M12 11v10" />
+          </svg>
+          <span>Lager</span>
+        </button>
+      </nav>
+    </main>
+
+    <div class="toast" id="toast" role="status" aria-live="polite">Gespeichert</div>
+    <script src="app.js"></script>
+  </body>
+</html>
