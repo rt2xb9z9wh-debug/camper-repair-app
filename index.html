@@ -15,7 +15,7 @@
     <link rel="manifest" href="manifest.webmanifest" />
     <link rel="icon" href="icon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="icon.svg" />
-    <link rel="stylesheet" href="styles.css?v=project-app-1" />
+    <link rel="stylesheet" href="styles.css?v=priority-flow-1" />
   </head>
   <body>
     <main class="phone-shell" aria-label="CamperFix Arbeits-App">
@@ -160,7 +160,7 @@
             </label>
             <label>
               Suche
-              <input id="searchInput" type="search" placeholder="ID, Kennzeichen, Schaden..." />
+              <input id="searchInput" type="search" placeholder="ID, Kennzeichen, Kommentar, Schaden..." />
             </label>
             <div class="segmented compact" role="group" aria-label="Statusfilter">
               <button type="button" class="selected" data-filter="all">Alle</button>
@@ -168,6 +168,7 @@
               <button type="button" data-filter="parts">Teile</button>
               <button type="button" data-filter="done">Fertig</button>
             </div>
+            <div id="damageOverview" class="overview-strip"></div>
           </section>
           <section id="damageList" class="damage-list" aria-label="Schadenliste"></section>
           <section class="work-card">
@@ -268,6 +269,6 @@
     </main>
 
     <div class="toast" id="toast" role="status" aria-live="polite">Gespeichert</div>
-    <script src="app.js?v=project-app-2"></script>
+    <script src="app.js?v=priority-flow-1"></script>
   </body>
 </html>

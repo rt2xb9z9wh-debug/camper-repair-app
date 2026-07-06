@@ -42,6 +42,8 @@ const seedDamages = [
     warranty: "yes",
     comment: "",
     sourceActive: true,
+    rentability: "Not rentable",
+    flagged: true,
   },
   {
     id: "D-1002",
@@ -56,6 +58,8 @@ const seedDamages = [
     warranty: "yes",
     comment: "",
     sourceActive: true,
+    rentability: "Rentable",
+    flagged: false,
   },
   {
     id: "D-1003",
@@ -70,6 +74,8 @@ const seedDamages = [
     warranty: "yes",
     comment: "",
     sourceActive: true,
+    rentability: "Rentable",
+    flagged: false,
   },
   {
     id: "D-1004",
@@ -84,6 +90,8 @@ const seedDamages = [
     warranty: "",
     comment: "",
     sourceActive: false,
+    rentability: "Rentable",
+    flagged: false,
   },
   {
     id: "D-1005",
@@ -98,6 +106,8 @@ const seedDamages = [
     warranty: "",
     comment: "Geprueft, aktuell kein Wassereintritt erkennbar.",
     sourceActive: false,
+    rentability: "Not rentable",
+    flagged: true,
   },
   {
     id: "D-1006",
@@ -112,6 +122,8 @@ const seedDamages = [
     warranty: "",
     comment: "Antrieb auf einer Seite defekt, Teil erforderlich.",
     sourceActive: true,
+    rentability: "Not rentable",
+    flagged: true,
   },
   {
     id: "D-1009",
@@ -126,6 +138,8 @@ const seedDamages = [
     warranty: "",
     comment: "Provisorisch abgedichtet.",
     sourceActive: false,
+    rentability: "Not rentable",
+    flagged: true,
   },
   {
     id: "D-2001",
@@ -140,6 +154,8 @@ const seedDamages = [
     warranty: "yes",
     comment: "",
     sourceActive: true,
+    rentability: "Rentable",
+    flagged: true,
   },
   {
     id: "D-2002",
@@ -154,6 +170,8 @@ const seedDamages = [
     warranty: "",
     comment: "",
     sourceActive: true,
+    rentability: "Not rentable",
+    flagged: true,
   },
   {
     id: "D-2003",
@@ -168,6 +186,8 @@ const seedDamages = [
     warranty: "",
     comment: "",
     sourceActive: true,
+    rentability: "Rentable",
+    flagged: false,
   },
   {
     id: "D-2004",
@@ -182,6 +202,8 @@ const seedDamages = [
     warranty: "",
     comment: "Pins ersetzt, Funktion getestet.",
     sourceActive: false,
+    rentability: "Rentable",
+    flagged: false,
   },
   {
     id: "D-3001",
@@ -196,6 +218,8 @@ const seedDamages = [
     warranty: "",
     comment: "",
     sourceActive: true,
+    rentability: "Rentable",
+    flagged: false,
   },
   {
     id: "D-3002",
@@ -210,6 +234,8 @@ const seedDamages = [
     warranty: "",
     comment: "",
     sourceActive: true,
+    rentability: "Not rentable",
+    flagged: true,
   },
 ];
 
@@ -307,11 +333,28 @@ function sourceDamages(project = activeProject()) {
   });
 }
 
-function filteredDamages() {
+function matchesSearch(damage) {
   const query = searchInput.value.trim().toLowerCase();
+  if (!query) return true;
+  const haystack = [
+    damage.id,
+    damage.plate,
+    damage.model,
+    damage.station,
+    damage.description,
+    damage.comment,
+    damage.partDecision,
+    damage.orderStatus,
+    damage.rentability,
+  ]
+    .join(" ")
+    .toLowerCase();
+  return haystack.includes(query);
+}
+
+function filteredDamages() {
   return projectDamages().filter((damage) => {
-    const haystack = `${damage.id} ${damage.plate} ${damage.model} ${damage.description} ${damage.comment}`.toLowerCase();
-    const matchesQuery = !query || haystack.includes(query);
+    const matchesQuery = matchesSearch(damage);
     const matchesFilter =
       activeFilter === "all" ||
       (activeFilter === "open" && !["Repariert", "Irreparabel"].includes(damage.status)) ||
@@ -319,6 +362,26 @@ function filteredDamages() {
       (activeFilter === "done" && damage.status === "Repariert");
     return matchesQuery && matchesFilter;
   });
+}
+
+function filteredSourceDamages() {
+  return sourceDamages().filter(matchesSearch);
+}
+
+function hasParts(damage) {
+  return Boolean(damage.partDecision || damage.orderStatus);
+}
+
+function rentabilityLabel(damage) {
+  return damage.rentability === "Not rentable" ? "Nicht mietbar" : "Rentable";
+}
+
+function priorityScore(damage) {
+  let score = 0;
+  if (damage.rentability === "Not rentable") score += 100;
+  if (hasParts(damage)) score += 20;
+  if (damage.flagged) score += 10;
+  return score;
 }
 
 function setView(viewName) {
@@ -427,15 +490,24 @@ function renderDashboard() {
 }
 
 function renderList() {
+  const projectRows = filteredDamages();
+  const sourceRows = filteredSourceDamages();
+  const urgent = [...projectRows, ...sourceRows].filter((damage) => damage.rentability === "Not rentable").length;
+  document.querySelector("#damageOverview").innerHTML = `
+    <span>${projectRows.length} im Projekt</span>
+    <span>${sourceRows.length} neu</span>
+    <span>${urgent} zuerst</span>
+  `;
+
   const rows = filteredDamages()
     .map(
       (damage) => `
-        <button type="button" class="damage-row ${selectedId === damage.id ? "selected" : ""}" data-damage-id="${damage.id}">
+        <button type="button" class="damage-row ${selectedId === damage.id ? "selected" : ""} ${damage.flagged ? "flagged" : ""}" data-damage-id="${damage.id}">
           <span class="status-dot ${statusType(damage.status)}"></span>
           <div>
             <strong>${damage.plate} · ${damage.id}</strong>
             <span>${damage.description}</span>
-            <small>${damage.sourceActive ? "Airtable aktiv" : "im Projekt gesichert"}</small>
+            <small>${damage.sourceActive ? "Airtable aktiv" : "im Projekt gesichert"} · ${rentabilityLabel(damage)} · ${hasParts(damage) ? "Teile nötig" : "keine Teile"}</small>
           </div>
           <em>${damage.units} E</em>
         </button>
@@ -447,21 +519,43 @@ function renderList() {
 }
 
 function renderSourceList() {
-  const rows = sourceDamages()
-    .map(
-      (damage) => `
-        <article class="source-item">
-          <div>
-            <strong>${damage.plate} · ${damage.id}</strong>
-            <span>${damage.description}</span>
-          </div>
-          <button type="button" data-import-damage="${damage.id}">Übernehmen</button>
-        </article>
-      `,
-    )
-    .join("");
+  const groups = [
+    { key: "not-rentable-parts", title: "Nicht mietbar · Teile nötig", filter: (damage) => damage.rentability === "Not rentable" && hasParts(damage) },
+    { key: "not-rentable-no-parts", title: "Nicht mietbar · keine Teile", filter: (damage) => damage.rentability === "Not rentable" && !hasParts(damage) },
+    { key: "rentable-parts", title: "Rentable · Teile nötig", filter: (damage) => damage.rentability !== "Not rentable" && hasParts(damage) },
+    { key: "rentable-no-parts", title: "Rentable · keine Teile", filter: (damage) => damage.rentability !== "Not rentable" && !hasParts(damage) },
+  ];
+  const rows = filteredSourceDamages().sort((a, b) => priorityScore(b) - priorityScore(a));
 
-  sourceList.innerHTML = rows || `<p class="empty-state">Keine neuen Airtable-Schäden für diese Station.</p>`;
+  sourceList.innerHTML =
+    groups
+      .map((group) => {
+        const groupRows = rows.filter(group.filter);
+        if (!groupRows.length) return "";
+        return `
+          <section class="source-group">
+            <div class="source-group-head">
+              <strong>${group.title}</strong>
+              <span>${groupRows.length}</span>
+            </div>
+            ${groupRows
+              .map(
+                (damage) => `
+                  <article class="source-item ${damage.flagged ? "flagged" : ""}">
+                    <div>
+                      <strong>${damage.plate} · ${damage.id}</strong>
+                      <span>${damage.description}</span>
+                      <small>${rentabilityLabel(damage)} · ${hasParts(damage) ? damage.orderStatus || damage.partDecision : "keine Teile nötig"}</small>
+                    </div>
+                    <button type="button" data-import-damage="${damage.id}">Übernehmen</button>
+                  </article>
+                `,
+              )
+              .join("")}
+          </section>
+        `;
+      })
+      .join("") || `<p class="empty-state">Keine neuen Airtable-Schäden für diese Station.</p>`;
 }
 
 function renderDetail() {
@@ -485,7 +579,7 @@ function renderDetail() {
       <div><span>Modell</span><strong>${damage.model}</strong></div>
       <div><span>Station</span><strong>${damage.station}</strong></div>
       <div><span>Teile</span><strong>${damage.orderStatus || "keine"}</strong></div>
-      <div><span>Quelle</span><strong>${damage.sourceActive ? "Airtable" : "Projektarchiv"}</strong></div>
+      <div><span>Priorität</span><strong>${rentabilityLabel(damage)}</strong></div>
     </div>
 
     <label>

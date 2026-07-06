@@ -321,6 +321,11 @@ progress::-webkit-progress-value {
   background: var(--blue-soft);
 }
 
+.damage-row.flagged,
+.source-item.flagged {
+  border-left: 5px solid var(--red);
+}
+
 .damage-row strong,
 .damage-row span {
   display: block;
@@ -343,6 +348,26 @@ progress::-webkit-progress-value {
 .damage-row em {
   color: var(--blue);
   font-style: normal;
+  font-weight: 900;
+}
+
+.overview-strip {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.overview-strip span {
+  display: grid;
+  min-height: 2.35rem;
+  place-items: center;
+  color: var(--blue);
+  text-align: center;
+  background: var(--blue-soft);
+  border: 1px solid #a9c9ff;
+  border-radius: 0.5rem;
+  font-size: 0.82rem;
   font-weight: 900;
 }
 
@@ -507,6 +532,41 @@ progress::-webkit-progress-value {
   border-radius: 0.65rem;
 }
 
+.source-group {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.source-group + .source-group {
+  margin-top: 0.5rem;
+}
+
+.source-group-head {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.65rem 0.75rem;
+  color: #334255;
+  background: #eef3f8;
+  border: 1px solid var(--line);
+  border-radius: 0.55rem;
+}
+
+.source-group-head span {
+  display: inline-grid;
+  min-width: 2rem;
+  height: 1.7rem;
+  place-items: center;
+  color: #fff;
+  background: var(--blue);
+  border-radius: 999px;
+  font-weight: 900;
+}
+
 .source-item strong,
 .source-item span {
   display: block;
@@ -515,6 +575,14 @@ progress::-webkit-progress-value {
 .source-item span {
   margin-top: 0.2rem;
   line-height: 1.2;
+}
+
+.source-item small {
+  display: block;
+  margin-top: 0.35rem;
+  color: #596577;
+  font-size: 0.76rem;
+  font-weight: 900;
 }
 
 .source-item button {
