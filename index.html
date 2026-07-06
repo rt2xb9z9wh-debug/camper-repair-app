@@ -15,7 +15,7 @@
     <link rel="manifest" href="manifest.webmanifest" />
     <link rel="icon" href="icon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="icon.svg" />
-    <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="styles.css?v=project-flow-1" />
   </head>
   <body>
     <main class="phone-shell" aria-label="CamperFix Arbeits-App">
@@ -46,6 +46,26 @@
         </section>
 
         <section class="view active" data-view-panel="dashboard">
+          <section class="work-card project-card">
+            <div class="section-head">
+              <div>
+                <p>Projekt / Reise</p>
+                <h2 id="projectTitle">Station wählen</h2>
+              </div>
+              <span class="pill" id="projectStation">Station</span>
+            </div>
+            <label>
+              Aktives Projekt
+              <select id="projectSelect"></select>
+            </label>
+            <div class="project-meta">
+              <div><span>Zeitraum</span><strong id="projectPeriod">-</strong></div>
+              <div><span>Airtable neu</span><strong id="sourceCount">0</strong></div>
+              <div><span>Gesichert</span><strong id="archiveCount">0</strong></div>
+            </div>
+            <div id="stationList" class="station-list" aria-label="Stationen"></div>
+          </section>
+
           <section class="grid dashboard-grid">
             <article class="metric-card warning">
               <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -122,6 +142,13 @@
 
         <section class="view" data-view-panel="damages">
           <section class="tool-card">
+            <div class="section-head tight">
+              <div>
+                <p id="damageProjectName">Projekt</p>
+                <h2>Projekt-Schäden</h2>
+              </div>
+              <span class="pill" id="damageStation">Station</span>
+            </div>
             <label>
               Suche
               <input id="searchInput" type="search" placeholder="ID, Kennzeichen, Schaden..." />
@@ -134,6 +161,16 @@
             </div>
           </section>
           <section id="damageList" class="damage-list" aria-label="Schadenliste"></section>
+          <section class="work-card">
+            <div class="section-head">
+              <div>
+                <p>Airtable Station</p>
+                <h2>Neu übernehmen</h2>
+              </div>
+              <span class="pill" id="airtableStation">Station</span>
+            </div>
+            <div id="sourceList" class="source-list"></div>
+          </section>
         </section>
 
         <section class="view" data-view-panel="detail">
@@ -144,7 +181,7 @@
           <section class="work-card">
             <div class="section-head">
               <div>
-                <p>Numbers-Logik</p>
+                <p id="billingProject">Numbers-Logik</p>
                 <h2>Abrechnung</h2>
               </div>
               <span class="pill">RS</span>
@@ -200,6 +237,6 @@
     </main>
 
     <div class="toast" id="toast" role="status" aria-live="polite">Gespeichert</div>
-    <script src="app.js"></script>
+    <script src="app.js?v=project-flow-1"></script>
   </body>
 </html>

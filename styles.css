@@ -156,7 +156,9 @@ h1 {
 
 .progress-row span,
 .field-grid span,
-.billing-grid span {
+.billing-grid span,
+.project-meta span,
+.source-item span {
   color: var(--muted);
   font-weight: 800;
 }
@@ -184,9 +186,69 @@ progress::-webkit-progress-value {
 }
 
 .priority-list,
-.damage-list {
+.damage-list,
+.source-list,
+.station-list {
   display: grid;
   gap: 0.65rem;
+}
+
+.project-card {
+  margin-bottom: 1rem;
+}
+
+.project-meta {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.55rem;
+  margin: 0.75rem 0 1rem;
+}
+
+.project-meta div {
+  min-height: 4.15rem;
+  padding: 0.65rem;
+  background: #f8fafc;
+  border: 1px solid var(--line);
+  border-radius: 0.55rem;
+}
+
+.project-meta strong {
+  display: block;
+  margin-top: 0.2rem;
+  font-size: 0.98rem;
+  line-height: 1.12;
+}
+
+.station-list {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.station-button {
+  min-height: 4.5rem;
+  padding: 0.7rem;
+  color: var(--ink);
+  text-align: left;
+  background: #f8fafc;
+  border: 1px solid var(--line);
+  border-radius: 0.65rem;
+}
+
+.station-button.selected {
+  color: var(--blue);
+  background: var(--blue-soft);
+  border-color: #a9c9ff;
+}
+
+.station-button strong,
+.station-button span {
+  display: block;
+}
+
+.station-button span {
+  margin-top: 0.2rem;
+  color: var(--muted);
+  font-size: 0.82rem;
+  line-height: 1.12;
 }
 
 .priority-item,
@@ -241,6 +303,14 @@ progress::-webkit-progress-value {
   margin-top: 0.2rem;
   color: var(--muted);
   line-height: 1.2;
+}
+
+.damage-row small {
+  display: inline-block;
+  margin-top: 0.35rem;
+  color: #596577;
+  font-size: 0.76rem;
+  font-weight: 800;
 }
 
 .damage-row em {
@@ -350,6 +420,42 @@ progress::-webkit-progress-value {
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: 0.65rem;
+}
+
+.source-item {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.75rem;
+  align-items: center;
+  padding: 0.8rem;
+  background: #f8fafc;
+  border: 1px solid var(--line);
+  border-radius: 0.65rem;
+}
+
+.source-item strong,
+.source-item span {
+  display: block;
+}
+
+.source-item span {
+  margin-top: 0.2rem;
+  line-height: 1.2;
+}
+
+.source-item button {
+  min-height: 2.45rem;
+  padding: 0 0.75rem;
+  color: #fff;
+  background: var(--blue);
+  border: 0;
+  border-radius: 0.5rem;
+  font-size: 0.84rem;
+  font-weight: 900;
+}
+
+.section-head.tight {
+  margin-bottom: 0.75rem;
 }
 
 .status-strip {
