@@ -2,6 +2,14 @@
 
 Mobile Web-App fuer Campervan-Schadenaufnahme, Reparaturstatus, Materialplanung und Tagesuebersicht.
 
+## Online nutzen
+
+```text
+https://camper-repair-app.vercel.app/
+```
+
+Auf dem iPhone in Safari oeffnen und ueber Teilen -> Zum Home-Bildschirm ablegen.
+
 ## Lokal testen
 
 ```bash
@@ -23,6 +31,4 @@ http://192.168.88.208:4173/
 
 ## Online stellen
 
-Diese App ist statisch. Du kannst den kompletten Ordner bei Netlify, Vercel oder GitHub Pages hochladen.
-
-Empfohlener naechster Schritt: GitHub Repository erstellen und dann mit Vercel verbinden.
+Die App ist aktuell bei Vercel veroeffentlicht. Fuer automatische Updates ist der naechste sinnvolle Schritt ein GitHub Repository, das mit Vercel verbunden wird.
