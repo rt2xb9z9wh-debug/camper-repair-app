@@ -32,3 +32,9 @@ http://192.168.88.208:4173/
 ## Online stellen
 
 Die App ist aktuell bei Vercel veroeffentlicht. Fuer automatische Updates ist der naechste sinnvolle Schritt ein GitHub Repository, das mit Vercel verbunden wird.
+
+GitHub Repository:
+
+```text
+https://github.com/rt2xb9z9wh-debug/camper-repair-app
+```
