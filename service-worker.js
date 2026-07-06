@@ -1,4 +1,4 @@
-const cacheName = "camperfix-v1";
+const cacheName = "camperfix-v2";
 const appFiles = ["./", "./index.html", "./styles.css", "./app.js", "./manifest.webmanifest", "./icon.svg"];
 
 self.addEventListener("install", (event) => {

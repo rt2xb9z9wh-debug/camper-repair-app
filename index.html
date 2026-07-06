@@ -23,210 +23,157 @@
         <header class="topbar">
           <div>
             <p class="eyebrow" id="todayLabel">Heute</p>
-            <h1>CamperFix</h1>
+            <h1>Schäden</h1>
           </div>
-          <button class="icon-button" type="button" aria-label="Synchronisieren" id="syncButton">
+          <a class="icon-button" href="https://airtable.com/appg5hlXJSrJyLEEE/shrLPAOuUGNaBQzUE/tblgbK6aCvkplwR0T" aria-label="Airtable öffnen">
             <svg viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M21 12a9 9 0 0 1-15.2 6.5" />
-              <path d="M3 12A9 9 0 0 1 18.2 5.5" />
-              <path d="M18 2v4h-4" />
-              <path d="M6 22v-4h4" />
+              <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+              <path d="M15 3h6v6" />
+              <path d="m10 14 11-11" />
             </svg>
-          </button>
+          </a>
         </header>
 
         <section class="status-strip">
           <div>
             <span>Letztes Update</span>
-            <strong id="lastUpdate">16:49</strong>
+            <strong id="lastUpdate">--:--</strong>
           </div>
           <div>
-            <span>Offline bereit</span>
-            <strong>8 Aufträge</strong>
+            <span>Quelle</span>
+            <strong>Airtable + RS</strong>
           </div>
         </section>
 
-        <nav class="quick-actions" aria-label="Schnellaktionen">
-          <button type="button" class="action-card active" data-action="damage">
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M12 5v14" />
-              <path d="M5 12h14" />
-            </svg>
-            <span>Schaden</span>
-          </button>
-          <button type="button" class="action-card" data-action="photo">
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M4 8h3l2-3h6l2 3h3v11H4z" />
-              <circle cx="12" cy="13" r="3.5" />
-            </svg>
-            <span>Fotos</span>
-          </button>
-          <button type="button" class="action-card" data-action="parts">
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M14 7 7 14" />
-              <path d="m8 6 10 10" />
-              <path d="M5 19h14" />
-            </svg>
-            <span>Material</span>
-          </button>
-        </nav>
+        <section class="view active" data-view-panel="dashboard">
+          <section class="grid dashboard-grid">
+            <article class="metric-card warning">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M12 8v5" />
+                <path d="M12 17h.01" />
+                <path d="M10.3 3.9 2.6 17.3A2 2 0 0 0 4.3 20h15.4a2 2 0 0 0 1.7-2.7L13.7 3.9a2 2 0 0 0-3.4 0Z" />
+              </svg>
+              <div>
+                <h2>Offen</h2>
+                <strong id="openCount">0</strong>
+                <span>zu prüfen</span>
+              </div>
+            </article>
 
-        <section class="grid">
-          <article class="metric-card warning">
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M12 8v5" />
-              <path d="M12 17h.01" />
-              <path d="M10.3 3.9 2.6 17.3A2 2 0 0 0 4.3 20h15.4a2 2 0 0 0 1.7-2.7L13.7 3.9a2 2 0 0 0-3.4 0Z" />
-            </svg>
-            <div>
-              <h2>Freigabe</h2>
-              <strong>OFFEN</strong>
-              <span>Kunde wartet</span>
-            </div>
-          </article>
+            <article class="metric-card success">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M20 6 9 17l-5-5" />
+              </svg>
+              <div>
+                <h2>Repariert</h2>
+                <strong id="doneCount">0</strong>
+                <span>fertig</span>
+              </div>
+            </article>
 
-          <article class="metric-card success">
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M20 6 9 17l-5-5" />
-            </svg>
-            <div>
-              <h2>Erledigt</h2>
-              <strong>3/7</strong>
-              <span>Heute abgeschlossen</span>
-            </div>
-          </article>
+            <article class="metric-card neutral">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M8 6h13" />
+                <path d="M8 12h13" />
+                <path d="M8 18h13" />
+                <path d="M3 6h.01" />
+                <path d="M3 12h.01" />
+                <path d="M3 18h.01" />
+              </svg>
+              <div>
+                <h2>Einheiten</h2>
+                <strong id="unitCount">0</strong>
+                <span>abrechenbar</span>
+              </div>
+            </article>
 
-          <article class="metric-card success">
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M6 3v18" />
-              <path d="M18 3v18" />
-              <path d="M6 8h12" />
-              <path d="M6 16h12" />
-            </svg>
-            <div>
-              <h2>Arbeitszeit</h2>
-              <strong>5:40 h</strong>
-              <span>Geplant 7:30h</span>
-            </div>
-          </article>
+            <article class="metric-card warning">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M14 7 7 14" />
+                <path d="m8 6 10 10" />
+                <path d="M5 19h14" />
+              </svg>
+              <div>
+                <h2>Teile</h2>
+                <strong id="partsCount">0</strong>
+                <span>Bestellung</span>
+              </div>
+            </article>
+          </section>
 
-          <article class="metric-card neutral">
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M3 7h18" />
-              <path d="M7 7v14" />
-              <path d="M17 7v14" />
-              <path d="M5 21h14" />
-              <path d="M8 3h8l2 4H6z" />
-            </svg>
-            <div>
-              <h2>Teile</h2>
-              <strong>2 fehlen</strong>
-              <span>Dichtband, Clips</span>
+          <section class="work-card">
+            <div class="section-head">
+              <div>
+                <p>Abarbeitung</p>
+                <h2>Heute wichtig</h2>
+              </div>
+              <span class="pill" id="stationPill">Demo</span>
             </div>
-          </article>
+            <div class="progress-row">
+              <div>
+                <span>Fortschritt</span>
+                <strong id="progressText">0%</strong>
+              </div>
+              <progress id="progressBar" value="0" max="100"></progress>
+            </div>
+            <div id="priorityList" class="priority-list"></div>
+          </section>
         </section>
 
-        <section class="active-job">
-          <div class="job-head">
-            <div>
-              <p>Aktueller Auftrag</p>
-              <h2>Sunlight Cliff 600</h2>
+        <section class="view" data-view-panel="damages">
+          <section class="tool-card">
+            <label>
+              Suche
+              <input id="searchInput" type="search" placeholder="ID, Kennzeichen, Schaden..." />
+            </label>
+            <div class="segmented compact" role="group" aria-label="Statusfilter">
+              <button type="button" class="selected" data-filter="all">Alle</button>
+              <button type="button" data-filter="open">Offen</button>
+              <button type="button" data-filter="parts">Teile</button>
+              <button type="button" data-filter="done">Fertig</button>
             </div>
-            <span class="pill">Priorität</span>
-          </div>
-
-          <div class="van-visual" role="img" aria-label="Campervan mit markierten Schadstellen">
-            <div class="van-body">
-              <span class="damage-dot dot-roof"></span>
-              <span class="damage-dot dot-door"></span>
-              <span class="damage-dot dot-rear"></span>
-              <div class="window front"></div>
-              <div class="window rear"></div>
-              <div class="wheel left"></div>
-              <div class="wheel right"></div>
-            </div>
-          </div>
-
-          <div class="job-stats">
-            <div>
-              <span>Schaden</span>
-              <strong>Seitenwand rechts</strong>
-            </div>
-            <div>
-              <span>Nächster Schritt</span>
-              <strong>Spachteln</strong>
-            </div>
-          </div>
+          </section>
+          <section id="damageList" class="damage-list" aria-label="Schadenliste"></section>
         </section>
 
-        <section class="detail-panel" id="detailPanel">
-          <div class="panel-head">
-            <h2>Schaden erfassen</h2>
-            <span>Neu</span>
-          </div>
-          <label>
-            Bereich
-            <select id="areaSelect">
-              <option>Seitenwand rechts</option>
-              <option>Dach</option>
-              <option>Heckklappe</option>
-              <option>Innenausbau</option>
-            </select>
-          </label>
-          <label>
-            Reparaturstatus
-            <select id="statusSelect">
-              <option>Prüfen</option>
-              <option>Demontage</option>
-              <option>Spachteln</option>
-              <option>Lack vorbereiten</option>
-              <option>Fertig</option>
-            </select>
-          </label>
-          <div class="segmented" role="group" aria-label="Schweregrad">
-            <button type="button">Leicht</button>
-            <button type="button" class="selected">Mittel</button>
-            <button type="button">Stark</button>
-          </div>
-          <button class="primary-button" type="button" id="saveDamage">Eintrag lokal speichern</button>
+        <section class="view" data-view-panel="detail">
+          <section class="detail-card" id="damageDetail"></section>
         </section>
 
-        <section class="timeline">
-          <h2>Tagesplan</h2>
-          <article>
-            <time>08:30</time>
-            <div>
-              <strong>Fotos vor Reparatur</strong>
-              <span>12 Bilder hinterlegt</span>
+        <section class="view" data-view-panel="billing">
+          <section class="work-card">
+            <div class="section-head">
+              <div>
+                <p>Numbers-Logik</p>
+                <h2>Abrechnung</h2>
+              </div>
+              <span class="pill">RS</span>
             </div>
-          </article>
-          <article>
-            <time>11:15</time>
-            <div>
-              <strong>Kostenschätzung</strong>
-              <span>Wartet auf Kundenfreigabe</span>
+            <div class="billing-grid">
+              <div><span>Reparatur-Einheiten</span><strong id="billingUnits">0</strong></div>
+              <div><span>Spesen</span><strong id="billingExpenses">0</strong></div>
+              <div><span>Kilometer</span><strong id="billingKm">0</strong></div>
+              <div><span>Fahrstunden</span><strong id="billingHours">0</strong></div>
             </div>
-          </article>
-          <article>
-            <time>14:00</time>
-            <div>
-              <strong>Material prüfen</strong>
-              <span>Dichtband nachbestellen</span>
-            </div>
-          </article>
+            <label>
+              Notiz fuer Rechnung
+              <textarea id="invoiceNote" rows="4" placeholder="z. B. Tag 1, besondere Teile, Kunde informiert..."></textarea>
+            </label>
+            <button class="primary-button" type="button" id="saveInvoiceNote">Rechnungsnotiz speichern</button>
+          </section>
         </section>
       </section>
 
       <nav class="bottom-nav" aria-label="Hauptnavigation">
-        <button type="button" class="nav-item active" data-view="auftraege">
+        <button type="button" class="nav-item active" data-view="dashboard">
           <svg viewBox="0 0 24 24" aria-hidden="true">
             <path d="M4 6h16" />
             <path d="M4 12h16" />
             <path d="M4 18h10" />
           </svg>
-          <span>Aufträge</span>
+          <span>Dashboard</span>
         </button>
-        <button type="button" class="nav-item" data-view="schaeden">
+        <button type="button" class="nav-item" data-view="damages">
           <svg viewBox="0 0 24 24" aria-hidden="true">
             <path d="M12 3 3 21h18z" />
             <path d="M12 9v5" />
@@ -234,20 +181,20 @@
           </svg>
           <span>Schäden</span>
         </button>
-        <button type="button" class="nav-item" data-view="kunden">
+        <button type="button" class="nav-item" data-view="detail">
           <svg viewBox="0 0 24 24" aria-hidden="true">
             <circle cx="12" cy="8" r="4" />
             <path d="M4 21a8 8 0 0 1 16 0" />
           </svg>
-          <span>Kunden</span>
+          <span>Detail</span>
         </button>
-        <button type="button" class="nav-item" data-view="lager">
+        <button type="button" class="nav-item" data-view="billing">
           <svg viewBox="0 0 24 24" aria-hidden="true">
             <path d="M3 7 12 3l9 4-9 4z" />
             <path d="M3 7v10l9 4 9-4V7" />
             <path d="M12 11v10" />
           </svg>
-          <span>Lager</span>
+          <span>Rechnung</span>
         </button>
       </nav>
     </main>

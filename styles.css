@@ -29,7 +29,9 @@ body {
 }
 
 button,
-select {
+select,
+input,
+textarea {
   font: inherit;
 }
 
@@ -92,6 +94,262 @@ h1 {
   border: 1px solid var(--line);
   border-radius: 50%;
   box-shadow: var(--shadow);
+  text-decoration: none;
+}
+
+.view {
+  display: none;
+}
+
+.view.active {
+  display: block;
+}
+
+.dashboard-grid {
+  margin-bottom: 1rem;
+}
+
+.work-card,
+.tool-card,
+.detail-card {
+  margin-top: 1rem;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 0.8rem;
+  box-shadow: var(--shadow);
+}
+
+.work-card,
+.tool-card,
+.detail-card {
+  padding: 1rem;
+}
+
+.section-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.section-head p,
+.section-head h2 {
+  margin: 0;
+}
+
+.section-head p {
+  color: var(--muted);
+  font-weight: 800;
+}
+
+.section-head h2 {
+  font-size: 1.35rem;
+  line-height: 1.12;
+}
+
+.progress-row {
+  display: grid;
+  gap: 0.7rem;
+  margin-bottom: 1rem;
+}
+
+.progress-row span,
+.field-grid span,
+.billing-grid span {
+  color: var(--muted);
+  font-weight: 800;
+}
+
+.progress-row strong {
+  display: block;
+  font-size: 2rem;
+}
+
+progress {
+  width: 100%;
+  height: 0.8rem;
+  overflow: hidden;
+  border: 0;
+  border-radius: 999px;
+  background: #e8edf3;
+}
+
+progress::-webkit-progress-bar {
+  background: #e8edf3;
+}
+
+progress::-webkit-progress-value {
+  background: var(--green);
+}
+
+.priority-list,
+.damage-list {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.priority-item,
+.damage-row {
+  width: 100%;
+  color: var(--ink);
+  text-align: left;
+  background: #f8fafc;
+  border: 1px solid var(--line);
+  border-radius: 0.65rem;
+}
+
+.priority-item {
+  display: grid;
+  grid-template-columns: 5rem 1fr;
+  gap: 0.35rem 0.75rem;
+  padding: 0.8rem;
+}
+
+.priority-item span,
+.priority-item em {
+  color: var(--muted);
+  font-style: normal;
+  font-weight: 800;
+}
+
+.priority-item strong {
+  grid-row: span 2;
+  line-height: 1.2;
+}
+
+.damage-row {
+  display: grid;
+  grid-template-columns: 0.75rem 1fr auto;
+  gap: 0.75rem;
+  align-items: center;
+  min-height: 5.2rem;
+  padding: 0.85rem;
+}
+
+.damage-row.selected {
+  border-color: #a9c9ff;
+  background: var(--blue-soft);
+}
+
+.damage-row strong,
+.damage-row span {
+  display: block;
+}
+
+.damage-row span {
+  margin-top: 0.2rem;
+  color: var(--muted);
+  line-height: 1.2;
+}
+
+.damage-row em {
+  color: var(--blue);
+  font-style: normal;
+  font-weight: 900;
+}
+
+.status-dot {
+  width: 0.75rem;
+  height: 0.75rem;
+  border-radius: 50%;
+  background: var(--orange);
+}
+
+.status-dot.done,
+.status-badge.done {
+  background: var(--green);
+}
+
+.status-dot.blocked,
+.status-badge.blocked {
+  background: var(--red);
+}
+
+.status-dot.partial,
+.status-badge.partial {
+  background: var(--orange);
+}
+
+.status-dot.open,
+.status-badge.open {
+  background: var(--blue);
+}
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2rem;
+  padding: 0 0.75rem;
+  color: #fff;
+  border-radius: 999px;
+  font-size: 0.82rem;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.field-grid,
+.billing-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.65rem;
+  margin-bottom: 1rem;
+}
+
+.field-grid div,
+.billing-grid div {
+  min-height: 4.3rem;
+  padding: 0.75rem;
+  background: #f8fafc;
+  border: 1px solid var(--line);
+  border-radius: 0.55rem;
+}
+
+.field-grid strong,
+.billing-grid strong {
+  display: block;
+  margin-top: 0.2rem;
+  line-height: 1.15;
+}
+
+.billing-grid strong {
+  font-size: 1.6rem;
+}
+
+.unit-stepper {
+  display: grid;
+  grid-template-columns: 3rem 1fr 3rem;
+  align-items: center;
+  min-height: 3.2rem;
+  margin-top: 0.35rem;
+  overflow: hidden;
+  background: #f8fafc;
+  border: 1px solid var(--line);
+  border-radius: 0.55rem;
+}
+
+.unit-stepper button {
+  height: 100%;
+  color: var(--blue);
+  background: #fff;
+  border: 0;
+  font-size: 1.4rem;
+  font-weight: 900;
+}
+
+.unit-stepper strong {
+  text-align: center;
+  font-size: 1.35rem;
+}
+
+.empty-state {
+  margin: 0;
+  padding: 1rem;
+  color: var(--muted);
+  text-align: center;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 0.65rem;
 }
 
 .status-strip {
@@ -382,15 +640,27 @@ label {
   font-weight: 800;
 }
 
-select {
+select,
+input,
+textarea {
   width: 100%;
-  min-height: 3rem;
   margin-top: 0.35rem;
   padding: 0 0.85rem;
   color: var(--ink);
   background: #f8fafc;
   border: 1px solid var(--line);
   border-radius: 0.5rem;
+}
+
+select,
+input {
+  min-height: 3rem;
+}
+
+textarea {
+  min-height: 7rem;
+  padding-top: 0.8rem;
+  resize: vertical;
 }
 
 .segmented {
@@ -401,6 +671,15 @@ select {
   margin: 0.4rem 0 1rem;
   background: #edf1f5;
   border-radius: 0.55rem;
+}
+
+.segmented.compact {
+  grid-template-columns: repeat(4, 1fr);
+}
+
+.segmented.compact button {
+  min-height: 2.35rem;
+  font-size: 0.86rem;
 }
 
 .segmented button {
