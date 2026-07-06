@@ -5,24 +5,26 @@ const noteKey = "camperfix:invoice-note:v2";
 const seedProjects = [
   {
     id: "project-nantes",
-    name: "Nantes Reise",
-    station: "Nantes",
+    name: "Frankreich Reise Juli",
+    stations: ["Nantes", "Toulouse"],
+    activeStation: "Nantes",
     period: "28.06. - 04.07.2026",
-    damageIds: ["D-1001", "D-1002", "D-1004", "D-1005", "D-1009"],
-  },
-  {
-    id: "project-toulouse",
-    name: "Toulouse Reise",
-    station: "Toulouse",
-    period: "08.07. - 11.07.2026",
-    damageIds: ["D-2001", "D-2002", "D-2004"],
+    ratePerUnit: 95,
+    damageIds: ["D-1001", "D-1002", "D-1004", "D-1005", "D-1009", "D-2004"],
+    expenses: [
+      { id: "E-1", type: "Hotel", amount: 320 },
+      { id: "E-2", type: "Kilometer", amount: 180 },
+    ],
   },
   {
     id: "project-bordeaux",
     name: "Bordeaux Nacharbeit",
-    station: "Bordeaux",
+    stations: ["Bordeaux"],
+    activeStation: "Bordeaux",
     period: "15.07. - 16.07.2026",
+    ratePerUnit: 95,
     damageIds: ["D-3001"],
+    expenses: [],
   },
 ];
 
@@ -218,11 +220,18 @@ const todayLabel = document.querySelector("#todayLabel");
 const lastUpdate = document.querySelector("#lastUpdate");
 const searchInput = document.querySelector("#searchInput");
 const projectSelect = document.querySelector("#projectSelect");
+const stationSelect = document.querySelector("#stationSelect");
 const damageList = document.querySelector("#damageList");
 const damageDetail = document.querySelector("#damageDetail");
 const sourceList = document.querySelector("#sourceList");
 const invoiceNote = document.querySelector("#invoiceNote");
 const saveInvoiceNote = document.querySelector("#saveInvoiceNote");
+const expenseType = document.querySelector("#expenseType");
+const expenseAmount = document.querySelector("#expenseAmount");
+const addExpenseButton = document.querySelector("#addExpenseButton");
+const newProjectButton = document.querySelector("#newProjectButton");
+const editProjectButton = document.querySelector("#editProjectButton");
+const deleteProjectButton = document.querySelector("#deleteProjectButton");
 
 let damages = loadArray(damageStorageKey, seedDamages);
 let projects = loadArray(projectStorageKey, seedProjects);
@@ -242,7 +251,17 @@ function loadArray(key, fallback) {
 }
 
 function activeProject() {
-  return projects.find((project) => project.id === activeProjectId) || projects[0];
+  const project = projects.find((item) => item.id === activeProjectId) || projects[0];
+  normalizeProject(project);
+  return project;
+}
+
+function normalizeProject(project) {
+  if (!project) return;
+  if (!project.stations) project.stations = project.station ? [project.station] : ["Nantes"];
+  if (!project.activeStation) project.activeStation = project.stations[0];
+  if (!project.expenses) project.expenses = [];
+  if (!project.ratePerUnit) project.ratePerUnit = 95;
 }
 
 function currentTime() {
@@ -282,8 +301,9 @@ function projectDamages(project = activeProject()) {
 }
 
 function sourceDamages(project = activeProject()) {
+  normalizeProject(project);
   return damages.filter((damage) => {
-    return damage.station === project.station && damage.sourceActive && !project.damageIds.includes(damage.id);
+    return damage.station === project.activeStation && damage.sourceActive && !project.damageIds.includes(damage.id);
   });
 }
 
@@ -318,30 +338,40 @@ function setProject(projectId) {
   render();
 }
 
+function setProjectStation(station) {
+  projects = projects.map((project) => (project.id === activeProjectId ? { ...project, activeStation: station } : project));
+  persist();
+  render();
+}
+
 function renderProjectControls() {
   const project = activeProject();
+  normalizeProject(project);
   projectSelect.innerHTML = projects
-    .map((item) => `<option value="${item.id}" ${item.id === project.id ? "selected" : ""}>${item.name} - ${item.station}</option>`)
+    .map((item) => `<option value="${item.id}" ${item.id === project.id ? "selected" : ""}>${item.name}</option>`)
+    .join("");
+  stationSelect.innerHTML = project.stations
+    .map((station) => `<option value="${station}" ${station === project.activeStation ? "selected" : ""}>${station}</option>`)
     .join("");
 
   document.querySelector("#projectTitle").textContent = project.name;
-  document.querySelector("#projectStation").textContent = project.station;
+  document.querySelector("#projectStation").textContent = project.activeStation;
   document.querySelector("#projectPeriod").textContent = project.period;
-  document.querySelector("#stationPill").textContent = project.station;
+  document.querySelector("#stationPill").textContent = project.activeStation;
   document.querySelector("#damageProjectName").textContent = project.name;
-  document.querySelector("#damageStation").textContent = project.station;
-  document.querySelector("#airtableStation").textContent = project.station;
+  document.querySelector("#damageStation").textContent = project.activeStation;
+  document.querySelector("#airtableStation").textContent = project.activeStation;
   document.querySelector("#billingProject").textContent = `${project.name} · ${project.period}`;
 
-  const stations = [...new Set(projects.map((item) => item.station))];
+  const stations = [...new Set([...project.stations, ...damages.map((damage) => damage.station)])];
   document.querySelector("#stationList").innerHTML = stations
     .map((station) => {
-      const stationProject = projects.find((item) => item.station === station);
-      const count = stationProject ? stationProject.damageIds.length : 0;
+      const count = projectDamages(project).filter((damage) => damage.station === station).length;
+      const isInProject = project.stations.includes(station);
       return `
-        <button type="button" class="station-button ${project.station === station ? "selected" : ""}" data-station="${station}">
+        <button type="button" class="station-button ${project.activeStation === station ? "selected" : ""}" data-station="${station}">
           <strong>${station}</strong>
-          <span>${count} Projektschäden</span>
+          <span>${isInProject ? `${count} im Projekt` : "hinzufügen"}</span>
         </button>
       `;
     })
@@ -357,6 +387,9 @@ function renderDashboard() {
   const units = rows.reduce((sum, damage) => sum + Number(damage.units || 0), 0);
   const progress = rows.length ? Math.round((done / rows.length) * 100) : 0;
   const archived = rows.filter((damage) => !damage.sourceActive).length;
+  const expenses = project.expenses.reduce((sum, item) => sum + Number(item.amount || 0), 0);
+  const revenue = units * Number(project.ratePerUnit || 0);
+  const profit = revenue - expenses;
 
   document.querySelector("#openCount").textContent = open;
   document.querySelector("#doneCount").textContent = done;
@@ -367,9 +400,15 @@ function renderDashboard() {
   document.querySelector("#progressText").textContent = `${progress}%`;
   document.querySelector("#progressBar").value = progress;
   document.querySelector("#billingUnits").textContent = units;
-  document.querySelector("#billingExpenses").textContent = "0";
-  document.querySelector("#billingKm").textContent = "0";
-  document.querySelector("#billingHours").textContent = "0";
+  document.querySelector("#billingRevenue").textContent = formatCurrency(revenue);
+  document.querySelector("#billingExpenses").textContent = formatCurrency(expenses);
+  document.querySelector("#billingProfit").textContent = formatCurrency(profit);
+  document.querySelector("#invoiceSummary").innerHTML = `
+    <div><span>Stationen</span><strong>${project.stations.join(" + ")}</strong></div>
+    <div><span>Satz je Einheit</span><strong>${formatCurrency(project.ratePerUnit)}</strong></div>
+    <div><span>Positionen</span><strong>${rows.length} Schäden</strong></div>
+  `;
+  renderExpenseList(project);
 
   document.querySelector("#priorityList").innerHTML =
     rows
@@ -482,14 +521,112 @@ function updateDamage(id, patch) {
 
 function importDamage(id) {
   const project = activeProject();
+  const damage = damages.find((item) => item.id === id);
   projects = projects.map((item) => {
     if (item.id !== project.id || item.damageIds.includes(id)) return item;
-    return { ...item, damageIds: [...item.damageIds, id] };
+    const stations = item.stations.includes(damage.station) ? item.stations : [...item.stations, damage.station];
+    return { ...item, stations, activeStation: damage.station, damageIds: [...item.damageIds, id] };
   });
   selectedId = id;
   persist();
   setView("detail");
   showToast("Schaden ins Projekt übernommen");
+}
+
+function formatCurrency(value) {
+  return new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(Number(value || 0));
+}
+
+function renderExpenseList(project = activeProject()) {
+  const list = document.querySelector("#expenseList");
+  list.innerHTML =
+    project.expenses
+      .map(
+        (expense) => `
+          <article class="expense-item">
+            <div><strong>${expense.type}</strong><span>${formatCurrency(expense.amount)}</span></div>
+            <button type="button" data-delete-expense="${expense.id}">Löschen</button>
+          </article>
+        `,
+      )
+      .join("") || `<p class="empty-state">Noch keine Spesen/Kosten im Projekt.</p>`;
+}
+
+function createProject() {
+  const name = window.prompt("Projektname", "London + Toulouse Reise");
+  if (!name) return;
+  const stationsInput = window.prompt("Stationen, mit Komma getrennt", "London, Toulouse");
+  const stations = (stationsInput || "London")
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean);
+  const period = window.prompt("Zeitraum", "nächste Woche") || "offen";
+  const rate = Number(window.prompt("Satz je Einheit", "95") || 95);
+  const project = {
+    id: `project-${Date.now()}`,
+    name,
+    stations,
+    activeStation: stations[0],
+    period,
+    ratePerUnit: rate,
+    damageIds: [],
+    expenses: [],
+  };
+  projects = [...projects, project];
+  activeProjectId = project.id;
+  selectedId = undefined;
+  persist();
+  render();
+  showToast("Projekt angelegt");
+}
+
+function editProject() {
+  const project = activeProject();
+  const name = window.prompt("Projektname", project.name);
+  if (!name) return;
+  const stations = (window.prompt("Stationen, mit Komma getrennt", project.stations.join(", ")) || project.stations.join(","))
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean);
+  const period = window.prompt("Zeitraum", project.period) || project.period;
+  const ratePerUnit = Number(window.prompt("Satz je Einheit", String(project.ratePerUnit)) || project.ratePerUnit);
+  projects = projects.map((item) =>
+    item.id === project.id ? { ...item, name, stations, activeStation: stations.includes(item.activeStation) ? item.activeStation : stations[0], period, ratePerUnit } : item,
+  );
+  persist();
+  render();
+  showToast("Projekt bearbeitet");
+}
+
+function deleteProject() {
+  if (projects.length <= 1) {
+    showToast("Ein Projekt muss bleiben");
+    return;
+  }
+  const project = activeProject();
+  if (!window.confirm(`${project.name} wirklich löschen? Die Schäden bleiben als Archivdaten erhalten.`)) return;
+  projects = projects.filter((item) => item.id !== project.id);
+  activeProjectId = projects[0].id;
+  selectedId = projectDamages()[0]?.id;
+  persist();
+  render();
+  showToast("Projekt gelöscht");
+}
+
+function addExpense() {
+  const amount = Number(expenseAmount.value || 0);
+  if (!amount) {
+    showToast("Betrag fehlt");
+    return;
+  }
+  const project = activeProject();
+  projects = projects.map((item) =>
+    item.id === project.id ? { ...item, expenses: [...item.expenses, { id: `E-${Date.now()}`, type: expenseType.value, amount }] } : item,
+  );
+  expenseAmount.value = "";
+  persist();
+  render();
+  showToast("Spesen hinzugefügt");
 }
 
 function render() {
@@ -506,8 +643,16 @@ document.addEventListener("click", (event) => {
 
   const station = event.target.closest("[data-station]");
   if (station) {
-    const project = projects.find((item) => item.station === station.dataset.station);
-    if (project) setProject(project.id);
+    const project = activeProject();
+    if (!project.stations.includes(station.dataset.station)) {
+      projects = projects.map((item) =>
+        item.id === project.id ? { ...item, stations: [...item.stations, station.dataset.station], activeStation: station.dataset.station } : item,
+      );
+      persist();
+      showToast("Station zum Projekt hinzugefügt");
+    } else {
+      setProjectStation(station.dataset.station);
+    }
   }
 
   const filter = event.target.closest("[data-filter]");
@@ -525,6 +670,16 @@ document.addEventListener("click", (event) => {
 
   const importButton = event.target.closest("[data-import-damage]");
   if (importButton) importDamage(importButton.dataset.importDamage);
+
+  const deleteExpense = event.target.closest("[data-delete-expense]");
+  if (deleteExpense) {
+    const project = activeProject();
+    projects = projects.map((item) =>
+      item.id === project.id ? { ...item, expenses: item.expenses.filter((expense) => expense.id !== deleteExpense.dataset.deleteExpense) } : item,
+    );
+    persist();
+    render();
+  }
 
   const step = event.target.closest("[data-unit]");
   if (step) {
@@ -544,7 +699,12 @@ document.addEventListener("click", (event) => {
 });
 
 projectSelect.addEventListener("change", () => setProject(projectSelect.value));
+stationSelect.addEventListener("change", () => setProjectStation(stationSelect.value));
 searchInput.addEventListener("input", renderList);
+newProjectButton.addEventListener("click", createProject);
+editProjectButton.addEventListener("click", editProject);
+deleteProjectButton.addEventListener("click", deleteProject);
+addExpenseButton.addEventListener("click", addExpense);
 
 saveInvoiceNote.addEventListener("click", () => {
   localStorage.setItem(`${noteKey}:${activeProjectId}`, invoiceNote.value.trim());
