@@ -16,7 +16,7 @@
     <link rel="icon" href="icon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="icon.svg" />
     <link rel="preload" href="assets/quick-fix-logo-black.png" as="image" />
-    <link rel="stylesheet" href="styles.css?v=csv-workflow-1" />
+    <link rel="stylesheet" href="styles.css?v=invoice-fixes-1" />
   </head>
   <body>
     <main class="phone-shell" aria-label="CamperFix Arbeits-App">
@@ -177,10 +177,10 @@
               <input id="searchInput" type="search" placeholder="ID, Kennzeichen, Kommentar, Schaden..." />
             </label>
             <div class="segmented compact" role="group" aria-label="Statusfilter">
-              <button type="button" class="selected" data-filter="all">Alle</button>
-              <button type="button" data-filter="open">Offen</button>
-              <button type="button" data-filter="parts">Teile</button>
-              <button type="button" data-filter="done">Fertig</button>
+              <button type="button" class="selected" data-filter="open">Offen</button>
+              <button type="button" data-filter="done">Repariert</button>
+              <button type="button" data-filter="partial">Teilrep.</button>
+              <button type="button" data-filter="blocked">Irrep.</button>
             </div>
             <div id="damageOverview" class="overview-strip"></div>
           </section>
@@ -219,8 +219,8 @@
             <div class="billing-grid">
               <div><span>Reparatur-Einheiten</span><strong id="billingUnits">0</strong></div>
               <div><span>Umsatz</span><strong id="billingRevenue">0 €</strong></div>
-              <div><span>Kosten</span><strong id="billingExpenses">0 €</strong></div>
-              <div><span>Gewinn</span><strong id="billingProfit">0 €</strong></div>
+              <div><span>Auslagen</span><strong id="billingExpenses">0 €</strong></div>
+              <div><span>Verdienst</span><strong id="billingProfit">0 €</strong></div>
             </div>
             <div class="invoice-summary" id="invoiceSummary"></div>
             <section class="expense-form">
@@ -276,16 +276,17 @@
         </button>
         <button type="button" class="nav-item" data-view="detail">
           <svg viewBox="0 0 24 24" aria-hidden="true">
-            <circle cx="12" cy="8" r="4" />
-            <path d="M4 21a8 8 0 0 1 16 0" />
+            <circle cx="11" cy="11" r="7" />
+            <path d="m20 20-4.2-4.2" />
           </svg>
           <span>Detail</span>
         </button>
         <button type="button" class="nav-item" data-view="billing">
           <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M3 7 12 3l9 4-9 4z" />
-            <path d="M3 7v10l9 4 9-4V7" />
-            <path d="M12 11v10" />
+            <path d="M7 3h7l4 4v14H7z" />
+            <path d="M14 3v5h5" />
+            <path d="M9 13h6" />
+            <path d="M9 17h6" />
           </svg>
           <span>Rechnung</span>
         </button>
@@ -293,6 +294,6 @@
     </main>
 
     <div class="toast" id="toast" role="status" aria-live="polite">Gespeichert</div>
-    <script src="app.js?v=csv-workflow-1"></script>
+    <script src="app.js?v=invoice-fixes-1"></script>
   </body>
 </html>

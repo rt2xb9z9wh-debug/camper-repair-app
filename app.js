@@ -299,7 +299,7 @@ let projects = loadArray(projectStorageKey, seedProjects);
 let profile = loadProfile();
 let activeProjectId = projects[0]?.id;
 let selectedId = activeProject()?.damageIds[0];
-let activeFilter = "all";
+let activeFilter = "open";
 let activeSourceFilter = "all";
 let damageScrollY = 0;
 const collapsedSourceGroups = new Set();
@@ -415,7 +415,7 @@ function persist() {
 function statusType(status) {
   if (status === "Repariert") return "done";
   if (status === "Irreparabel") return "blocked";
-  if (status === "Partly repaired") return "partial";
+  if (status === "Partly repaired" || status === "Teilrepariert") return "partial";
   return "open";
 }
 
@@ -458,10 +458,10 @@ function filteredDamages() {
   return projectDamages().filter((damage) => {
     const matchesQuery = matchesSearch(damage);
     const matchesFilter =
-      activeFilter === "all" ||
-      (activeFilter === "open" && !["Repariert", "Irreparabel"].includes(damage.status)) ||
-      (activeFilter === "parts" && Boolean(damage.partDecision || damage.orderStatus)) ||
-      (activeFilter === "done" && damage.status === "Repariert");
+      (activeFilter === "open" && !["Repariert", "Irreparabel", "Partly repaired", "Teilrepariert"].includes(damage.status)) ||
+      (activeFilter === "done" && damage.status === "Repariert") ||
+      (activeFilter === "partial" && ["Partly repaired", "Teilrepariert"].includes(damage.status)) ||
+      (activeFilter === "blocked" && damage.status === "Irreparabel");
     return matchesQuery && matchesFilter;
   });
 }
@@ -680,8 +680,8 @@ function setProject(projectId) {
   selectedId = projectDamages()[0]?.id;
   searchInput.value = "";
   invoiceNote.value = localStorage.getItem(`${noteKey}:${activeProjectId}`) || "";
-  activeFilter = "all";
-  document.querySelectorAll("[data-filter]").forEach((button) => button.classList.toggle("selected", button.dataset.filter === "all"));
+  activeFilter = "open";
+  document.querySelectorAll("[data-filter]").forEach((button) => button.classList.toggle("selected", button.dataset.filter === "open"));
   render();
 }
 
@@ -737,7 +737,7 @@ function renderDashboard() {
   const archived = rows.filter((damage) => !damage.sourceActive).length;
   const expenses = project.expenses.reduce((sum, item) => sum + Number(item.amount || 0), 0);
   const revenue = units * Number(project.ratePerUnit || 0);
-  const profit = revenue - expenses;
+  const profit = revenue;
 
   document.querySelector("#doneCount").textContent = done;
   document.querySelector("#unitCount").textContent = units;
@@ -755,6 +755,7 @@ function renderDashboard() {
     <div><span>Stationen</span><strong>${project.stations.join(" + ")}</strong></div>
     <div><span>Satz je Einheit</span><strong>${formatCurrency(project.ratePerUnit)}</strong></div>
     <div><span>Positionen</span><strong>${rows.length} Schäden</strong></div>
+    <div><span>Rechnung gesamt</span><strong>${formatCurrency(revenue + expenses)}</strong></div>
   `;
   renderExpenseList(project);
 
@@ -885,7 +886,7 @@ function renderDetail() {
     <label>
       Status
       <select id="detailStatus">
-        ${["Offen", "Repariert", "Partly repaired", "Irreparabel"].map((status) => `<option ${status === damage.status ? "selected" : ""}>${status}</option>`).join("")}
+        ${["Offen", "Repariert", "Teilrepariert", "Irreparabel"].map((status) => `<option ${status === damage.status || (status === "Teilrepariert" && damage.status === "Partly repaired") ? "selected" : ""}>${status}</option>`).join("")}
       </select>
     </label>
 
@@ -1043,6 +1044,7 @@ function exportDocument(type) {
   const units = rows.reduce((sum, damage) => sum + Number(damage.units || 0), 0);
   const expenses = project.expenses.reduce((sum, item) => sum + Number(item.amount || 0), 0);
   const revenue = units * Number(project.ratePerUnit || profile.unitRate || 0);
+  const note = localStorage.getItem(`${noteKey}:${activeProjectId}`) || invoiceNote.value.trim();
   const title = type === "report" ? `RS ${project.activeStation} Report ${project.period}` : `Rechnung ${project.name}`;
   const reportRows = rows
     .map(
@@ -1075,6 +1077,7 @@ function exportDocument(type) {
           th { background: #c9c9c9; text-align: left; }
           th, td { border: 1px solid #aaa; padding: 6px; vertical-align: top; }
           td.id { background: #ddd; font-weight: 700; text-align: right; }
+          .note { border: 1px solid #aaa; padding: 10px; margin: 0 0 16px; white-space: pre-wrap; }
           .status.done { background: #b9ec9a; }
           .status.blocked { background: #ff9c8c; }
           .status.partial { background: #fff99b; }
@@ -1088,7 +1091,7 @@ function exportDocument(type) {
         <h1>${e(title)}</h1>
         ${
           type === "invoice"
-            ? `<section class="summary"><div>Einheiten<br><strong>${units}</strong></div><div>Umsatz<br><strong>${formatCurrency(revenue)}</strong></div><div>Kosten<br><strong>${formatCurrency(expenses)}</strong></div><div>Gewinn<br><strong>${formatCurrency(revenue - expenses)}</strong></div></section>`
+            ? `<section class="summary"><div>Einheiten<br><strong>${units}</strong></div><div>Verdienst<br><strong>${formatCurrency(revenue)}</strong></div><div>Auslagen<br><strong>${formatCurrency(expenses)}</strong></div><div>Rechnung gesamt<br><strong>${formatCurrency(revenue + expenses)}</strong></div></section>${note ? `<section class="note"><strong>Notiz fuer Rechnung</strong><br>${e(note)}</section>` : ""}`
             : ""
         }
         <table>
