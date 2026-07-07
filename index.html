@@ -16,7 +16,7 @@
     <link rel="icon" href="icon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="icon.svg" />
     <link rel="preload" href="assets/quick-fix-logo-black.png" as="image" />
-    <link rel="stylesheet" href="styles.css?v=quickfix-workflow-1" />
+    <link rel="stylesheet" href="styles.css?v=csv-workflow-1" />
   </head>
   <body>
     <main class="phone-shell" aria-label="CamperFix Arbeits-App">
@@ -35,8 +35,8 @@
           </button>
           <div class="app-menu" id="appMenu" hidden>
             <button type="button" data-menu-action="profile">Profil & Preise</button>
-            <button type="button" data-menu-action="sync">Airtable aktualisieren</button>
-            <a href="https://airtable.com/appg5hlXJSrJyLEEE/shrLPAOuUGNaBQzUE/tblgbK6aCvkplwR0T" target="_blank" rel="noreferrer">Airtable öffnen</a>
+            <button type="button" data-menu-action="import">CSV importieren</button>
+            <button type="button" data-menu-action="export">Arbeitsliste exportieren</button>
             <button type="button" data-menu-action="login">Anmelden</button>
             <button type="button" data-menu-action="logout">Abmelden</button>
           </div>
@@ -49,7 +49,7 @@
           </div>
           <div>
             <span>Quelle</span>
-            <strong>Airtable + RS</strong>
+            <strong>CSV + RS</strong>
           </div>
         </section>
 
@@ -73,7 +73,7 @@
             </div>
             <div class="project-meta">
               <div><span>Zeitraum</span><strong id="projectPeriod">-</strong></div>
-              <div><span>Airtable neu</span><strong id="sourceCount">0</strong></div>
+              <div><span>Liste neu</span><strong id="sourceCount">0</strong></div>
               <div><span>Gesichert</span><strong id="archiveCount">0</strong></div>
             </div>
             <div id="stationList" class="station-list" aria-label="Stationen"></div>
@@ -163,6 +163,11 @@
               <span class="pill" id="damageStation">Station</span>
             </div>
             <button class="primary-button slim" type="button" id="manualDamageButton">Schaden manuell hinzufügen</button>
+            <div class="button-row import-row">
+              <button class="secondary-button" type="button" id="importCsvButton">CSV importieren</button>
+              <button class="secondary-button" type="button" id="exportCsvButton">CSV exportieren</button>
+              <input id="csvImportInput" type="file" accept=".csv,text/csv" hidden />
+            </div>
             <label>
               Station in diesem Projekt
               <select id="stationSelect"></select>
@@ -183,12 +188,12 @@
           <section class="work-card">
             <div class="section-head">
               <div>
-                <p>Airtable Station</p>
+                <p>Importierte Liste</p>
                 <h2>Neu übernehmen</h2>
               </div>
               <span class="pill" id="airtableStation">Station</span>
             </div>
-            <div class="segmented compact source-tabs" role="group" aria-label="Airtable Sortierung">
+            <div class="segmented compact source-tabs" role="group" aria-label="Listen Sortierung">
               <button type="button" class="selected" data-source-filter="all">Alle</button>
               <button type="button" data-source-filter="notRentable">Nicht mietbar</button>
               <button type="button" data-source-filter="parts">Teile</button>
@@ -288,6 +293,6 @@
     </main>
 
     <div class="toast" id="toast" role="status" aria-live="polite">Gespeichert</div>
-    <script src="app.js?v=quickfix-workflow-1"></script>
+    <script src="app.js?v=csv-workflow-1"></script>
   </body>
 </html>

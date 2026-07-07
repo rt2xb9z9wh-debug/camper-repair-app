@@ -290,6 +290,9 @@ const appMenu = document.querySelector("#appMenu");
 const manualDamageButton = document.querySelector("#manualDamageButton");
 const exportInvoiceButton = document.querySelector("#exportInvoiceButton");
 const exportReportButton = document.querySelector("#exportReportButton");
+const importCsvButton = document.querySelector("#importCsvButton");
+const exportCsvButton = document.querySelector("#exportCsvButton");
+const csvImportInput = document.querySelector("#csvImportInput");
 
 let damages = loadArray(damageStorageKey, seedDamages);
 let projects = loadArray(projectStorageKey, seedProjects);
@@ -441,6 +444,7 @@ function matchesSearch(damage) {
     damage.station,
     damage.description,
     damage.comment,
+    damage.orderComment,
     damage.partDecision,
     damage.orderStatus,
     damage.rentability,
@@ -493,6 +497,157 @@ function priorityScore(damage) {
   if (hasParts(damage)) score += 20;
   if (damage.flagged) score += 10;
   return score;
+}
+
+function parseCsv(text) {
+  const rows = [];
+  let row = [];
+  let value = "";
+  let quoted = false;
+  for (let index = 0; index < text.length; index += 1) {
+    const char = text[index];
+    const next = text[index + 1];
+    if (quoted) {
+      if (char === '"' && next === '"') {
+        value += '"';
+        index += 1;
+      } else if (char === '"') {
+        quoted = false;
+      } else {
+        value += char;
+      }
+    } else if (char === '"') {
+      quoted = true;
+    } else if (char === ",") {
+      row.push(value);
+      value = "";
+    } else if (char === "\n") {
+      row.push(value);
+      rows.push(row);
+      row = [];
+      value = "";
+    } else if (char !== "\r") {
+      value += char;
+    }
+  }
+  row.push(value);
+  rows.push(row);
+  return rows.filter((item) => item.some((cell) => cell.trim()));
+}
+
+function csvValue(value) {
+  const text = String(value ?? "");
+  return /[",\n\r]/.test(text) ? `"${text.replaceAll('"', '""')}"` : text;
+}
+
+function getField(record, names, fallback = "") {
+  for (const name of names) {
+    if (record[name] !== undefined && record[name] !== "") return record[name];
+  }
+  return fallback;
+}
+
+function extractUrls(text) {
+  return String(text || "").match(/https?:\/\/[^\s),]+/g) || [];
+}
+
+function mapCsvDamage(record, fallbackStation) {
+  const id = String(getField(record, ["damage_id", "Damage ID", "ID"], `CSV-${Date.now()}`)).trim();
+  const when = String(getField(record, ["When to repair"], "")).toLowerCase();
+  const partDecision = String(getField(record, ["Part Decision"], "")).trim();
+  const orderStatus = String(getField(record, ["Order Status (repair list & order list)", "Order Status", "Needs Order"], "")).trim();
+  const flagged = when.includes("asap") || when.includes("defer") || when.includes("stop renting");
+  return {
+    id,
+    plate: String(getField(record, ["license_plate", "Plate", "License Plate", "Kennzeichen"], "")).trim(),
+    model: String(getField(record, ["Subgroup (from vehicle_id)", "Subgroup", "Model"], "CSV Import")).trim(),
+    vehicleId: String(getField(record, ["vehicle_id"], "")).trim(),
+    station: String(getField(record, ["Station"], fallbackStation)).trim() || fallbackStation,
+    description: String(getField(record, ["Damage Description", "Damage", "Description"], "")).trim(),
+    status: "Offen",
+    partDecision,
+    orderStatus,
+    units: 0,
+    warranty: String(getField(record, ["warranty", "Warranty"], "")).trim(),
+    comment: String(getField(record, ["Comment NEW", "Comment", "Repair Comment"], "")).trim(),
+    orderComment: orderStatus,
+    sourceActive: true,
+    rentability: flagged ? "Not rentable" : "Rentable",
+    flagged,
+    photos: extractUrls(getField(record, ["Damage Pictures", "Pictures", "Photos"], "")),
+    links: {
+      fillout: String(getField(record, ["Fillout Station"], "")).trim(),
+      vehicle: String(getField(record, ["LINK TO WAVE CAR"], "")).trim(),
+      damage: String(getField(record, ["damage link Button"], "")).trim(),
+    },
+    importedAt: new Date().toISOString(),
+  };
+}
+
+function importCsvFile(file) {
+  if (!file) return;
+  const reader = new FileReader();
+  reader.addEventListener("load", () => {
+    const project = activeProject();
+    const rows = parseCsv(String(reader.result || ""));
+    const header = rows[0] || [];
+    const imported = rows
+      .slice(1)
+      .map((row) => Object.fromEntries(header.map((name, index) => [name, row[index] || ""])))
+      .map((record) => mapCsvDamage(record, project.activeStation))
+      .filter((damage) => damage.id && damage.description);
+    const byId = new Map(damages.map((damage) => [damage.id, damage]));
+    imported.forEach((damage) => {
+      const existing = byId.get(damage.id);
+      if (existing && !existing.sourceActive) {
+        byId.set(damage.id, { ...damage, ...existing, sourceActive: false });
+      } else {
+        byId.set(damage.id, existing ? { ...existing, ...damage, comment: existing.comment || damage.comment } : damage);
+      }
+    });
+    damages = [...byId.values()];
+    persist();
+    render();
+    showToast(`${imported.length} Schäden importiert`);
+  });
+  reader.readAsText(file);
+}
+
+function exportCsv(filename, rows) {
+  const csv = rows.map((row) => row.map(csvValue).join(",")).join("\n");
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = filename;
+  link.click();
+  URL.revokeObjectURL(link.href);
+}
+
+function exportWorkCsv() {
+  const project = activeProject();
+  const projectIds = new Set(project.damageIds);
+  const rowsForStation = damages
+    .filter((damage) => damage.station === project.activeStation)
+    .sort((a, b) => priorityScore(b) - priorityScore(a) || a.plate.localeCompare(b.plate));
+  const rows = [
+    ["damage_id", "license_plate", "Subgroup", "Station", "Damage Description", "Comment NEW", "Needs Order", "Status", "Units", "Part Decision", "Order Status", "Priority", "In Project"],
+    ...rowsForStation.map((damage) => [
+      damage.id,
+      damage.plate,
+      damage.model,
+      damage.station,
+      damage.description,
+      damage.comment || "",
+      damage.orderComment || damage.orderStatus || "",
+      damage.status,
+      damage.units || 0,
+      damage.partDecision || "",
+      damage.orderStatus || "",
+      damage.flagged ? "rot/dringend" : "",
+      projectIds.has(damage.id) ? "yes" : "",
+    ]),
+  ];
+  exportCsv(`${project.name.replaceAll(" ", "-")}-${project.activeStation}-arbeitsliste.csv`, rows);
 }
 
 function repairHelp(damage) {
@@ -638,7 +793,7 @@ function renderList() {
           <div>
             <strong>${e(damage.plate)} · ${e(damage.id)}</strong>
             <span>${e(damage.description)}</span>
-            <small>${damage.sourceActive ? "Airtable aktiv" : "im Projekt gesichert"} · ${rentabilityLabel(damage)} · ${hasParts(damage) ? "Teile nötig" : "keine Teile"}</small>
+            <small>${damage.sourceActive ? "CSV aktiv" : "im Projekt gesichert"} · ${rentabilityLabel(damage)} · ${hasParts(damage) ? "Teile nötig" : "keine Teile"}</small>
           </div>
           <em>${damage.units} E</em>
         </button>
@@ -692,7 +847,7 @@ function renderSourceList() {
           </section>
         `;
       })
-      .join("") || `<p class="empty-state">Keine neuen Airtable-Schäden für diese Station.</p>`;
+      .join("") || `<p class="empty-state">Keine neuen CSV-Schäden für diese Station.</p>`;
 }
 
 function renderDetail() {
@@ -762,7 +917,7 @@ function renderDetail() {
 
 function renderPhotoLinks(damage) {
   const photos = Array.isArray(damage.photos) ? damage.photos.filter(Boolean) : [];
-  if (!photos.length) return `<p class="photo-note">Keine Airtable-Fotos in diesem Datensatz.</p>`;
+  if (!photos.length) return `<p class="photo-note">Keine Foto-Links in diesem Datensatz.</p>`;
   return `
     <div class="photo-links">
       ${photos
@@ -880,29 +1035,6 @@ function renderExpenseList(project = activeProject()) {
         `,
       )
       .join("") || `<p class="empty-state">Noch keine Spesen/Kosten im Projekt.</p>`;
-}
-
-async function syncAirtable() {
-  const project = activeProject();
-  showToast("Airtable wird geladen...");
-  try {
-    const response = await fetch(`/api/airtable?station=${encodeURIComponent(project.activeStation)}`);
-    if (!response.ok) throw new Error("sync unavailable");
-    const payload = await response.json();
-    const incoming = Array.isArray(payload.damages) ? payload.damages : [];
-    const byId = new Map(damages.map((damage) => [damage.id, damage]));
-    incoming.forEach((damage) => {
-      const existing = byId.get(damage.id);
-      byId.set(damage.id, existing ? { ...existing, ...damage, comment: existing.comment || damage.comment || "", orderComment: existing.orderComment || damage.orderComment || "" } : damage);
-    });
-    damages = [...byId.values()];
-    hydrateDamageMetadata();
-    persist();
-    render();
-    showToast(`${incoming.length} Airtable-Schäden aktualisiert`);
-  } catch {
-    showToast("Airtable ist noch nicht verbunden");
-  }
 }
 
 function exportDocument(type) {
@@ -1056,8 +1188,9 @@ document.addEventListener("click", (event) => {
   if (menuAction) {
     appMenu.hidden = true;
     if (menuAction.dataset.menuAction === "profile") editProfile();
-    if (menuAction.dataset.menuAction === "sync") syncAirtable();
-    if (menuAction.dataset.menuAction === "login") showToast("Login wird mit Airtable-Sync vorbereitet");
+    if (menuAction.dataset.menuAction === "import") csvImportInput.click();
+    if (menuAction.dataset.menuAction === "export") exportWorkCsv();
+    if (menuAction.dataset.menuAction === "login") showToast("Login kommt später, CSV läuft ohne Konto");
     if (menuAction.dataset.menuAction === "logout") showToast("Abgemeldet auf diesem Gerät");
   }
 
@@ -1161,6 +1294,12 @@ deleteProjectButton.addEventListener("click", deleteProject);
 addExpenseButton.addEventListener("click", addExpense);
 exportInvoiceButton.addEventListener("click", () => exportDocument("invoice"));
 exportReportButton.addEventListener("click", () => exportDocument("report"));
+importCsvButton.addEventListener("click", () => csvImportInput.click());
+exportCsvButton.addEventListener("click", exportWorkCsv);
+csvImportInput.addEventListener("change", () => {
+  importCsvFile(csvImportInput.files[0]);
+  csvImportInput.value = "";
+});
 
 saveInvoiceNote.addEventListener("click", () => {
   localStorage.setItem(`${noteKey}:${activeProjectId}`, invoiceNote.value.trim());

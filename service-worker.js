@@ -1,4 +1,4 @@
-const cacheName = "camperfix-v7";
+const cacheName = "camperfix-v8";
 const appFiles = ["./", "./index.html", "./styles.css", "./app.js", "./manifest.webmanifest", "./icon.svg", "./assets/quick-fix-logo-black.png"];
 
 self.addEventListener("install", (event) => {

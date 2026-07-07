@@ -253,6 +253,10 @@ progress::-webkit-progress-value {
   margin: 0.75rem 0 1rem;
 }
 
+.import-row {
+  grid-template-columns: 1fr 1fr;
+}
+
 .secondary-button,
 .danger-button,
 .primary-button {
