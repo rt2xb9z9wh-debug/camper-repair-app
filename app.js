@@ -414,9 +414,8 @@ async function initSupabase() {
   const hasConfig = Boolean(supabaseConfig.supabaseUrl && supabaseConfig.supabaseAnonKey);
   if (!hasConfig) {
     setCloudStatus("Offline lokal");
-    loginHint.textContent = "Supabase ist noch nicht verbunden. Du kannst offline weiterarbeiten; Cloud Sync kommt nach dem Einrichten.";
+    loginHint.textContent = "Cloud Sync ist nicht verbunden. Die App speichert lokal auf diesem Gerät.";
     loginButton.disabled = true;
-    loginScreen.classList.remove("hidden");
     return;
   }
 
@@ -432,7 +431,6 @@ async function initSupabase() {
     } else {
       cloudReady = false;
       setCloudStatus("Offline lokal");
-      loginScreen.classList.remove("hidden");
     }
   });
 
@@ -440,8 +438,8 @@ async function initSupabase() {
     loginScreen.classList.add("hidden");
     await loadCloudState();
   } else {
-    setCloudStatus("Login bereit");
-    loginScreen.classList.remove("hidden");
+    setCloudStatus("Lokal gespeichert");
+    loginScreen.classList.add("hidden");
   }
 }
 
@@ -839,11 +837,12 @@ function renderProjectControls() {
   document.querySelector("#stationList").innerHTML = stations
     .map((station) => {
       const count = projectDamages(project).filter((damage) => damage.station === station).length;
+      const openSource = damages.filter((damage) => damage.station === station && damage.sourceActive && !project.damageIds.includes(damage.id)).length;
       const isInProject = project.stations.includes(station);
       return `
         <button type="button" class="station-button ${project.activeStation === station ? "selected" : ""}" data-station="${station}">
           <strong>${e(station)}</strong>
-          <span>${isInProject ? `${count} im Projekt` : "hinzufügen"}</span>
+          <span>${isInProject ? `${count} gespeichert · ${openSource} neu` : `${openSource} neu · hinzufügen`}</span>
         </button>
       `;
     })
@@ -1320,10 +1319,10 @@ async function sendLoginLink() {
   }
   const { error } = await supabaseClient.auth.signInWithOtp({
     email,
-    options: { emailRedirectTo: window.location.href.split("#")[0] },
+    options: { emailRedirectTo: window.location.origin },
   });
   if (error) {
-    loginHint.textContent = "Login-Link konnte nicht gesendet werden.";
+    loginHint.textContent = `Login-Link konnte nicht gesendet werden: ${error.message}`;
     showToast("Login fehlgeschlagen");
     return;
   }
@@ -1480,7 +1479,7 @@ invoiceNote.value = localStorage.getItem(`${noteKey}:${activeProjectId}`) || "";
 render();
 initSupabase().catch(() => {
   setCloudStatus("Offline lokal");
-  loginScreen.classList.remove("hidden");
+  loginScreen.classList.add("hidden");
 });
 
 if ("serviceWorker" in navigator) {

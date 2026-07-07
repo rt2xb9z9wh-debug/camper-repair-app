@@ -1309,6 +1309,10 @@ textarea {
   transform: translate(50%, 0);
 }
 
+.hidden-control {
+  display: none;
+}
+
 @media (min-width: 56rem) {
   body {
     display: grid;

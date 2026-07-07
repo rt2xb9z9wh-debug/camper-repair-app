@@ -16,10 +16,10 @@
     <link rel="icon" href="icon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="icon.svg" />
     <link rel="preload" href="assets/quick-fix-logo-black.png" as="image" />
-    <link rel="stylesheet" href="styles.css?v=supabase-sync-1" />
+    <link rel="stylesheet" href="styles.css?v=local-first-stations-1" />
   </head>
   <body>
-    <section class="login-screen" id="loginScreen">
+    <section class="login-screen hidden" id="loginScreen">
       <div class="login-art" aria-hidden="true">
         <div class="sun"></div>
         <div class="van-shape">
@@ -29,15 +29,15 @@
       </div>
       <img class="login-logo" src="assets/quick-fix-logo-black.png" alt="Quick Fix" />
       <div class="login-card">
-        <p>Cloud Sync</p>
-        <h1>Sicher arbeiten, nichts verlieren.</h1>
+        <p>Optionaler Cloud Sync</p>
+        <h1>Erst arbeiten. Login nur, wenn er wirklich passt.</h1>
         <label>
           E-Mail
           <input id="loginEmail" type="email" autocomplete="email" placeholder="du@example.com" />
         </label>
-        <button class="primary-button" type="button" id="loginButton">Login-Link senden</button>
+        <button class="primary-button" type="button" id="loginButton">Cloud-Link senden</button>
         <button class="secondary-button" type="button" id="offlineButton">Offline weiterarbeiten</button>
-        <small id="loginHint">Nach dem Einrichten von Supabase bekommst du einen sicheren Magic Link per E-Mail.</small>
+        <small id="loginHint">Die App speichert lokal auf diesem Gerät. Cloud Sync bleibt optional.</small>
       </div>
     </section>
 
@@ -58,8 +58,8 @@
           <div class="app-menu" id="appMenu" hidden>
             <button type="button" data-menu-action="profile">Profil & Preise</button>
             <button type="button" data-menu-action="import">CSV importieren</button>
-            <button type="button" data-menu-action="login">Anmelden</button>
-            <button type="button" data-menu-action="logout">Abmelden</button>
+            <button type="button" data-menu-action="login">Cloud Login</button>
+            <button type="button" data-menu-action="logout">Cloud Logout</button>
           </div>
         </header>
 
@@ -188,7 +188,7 @@
               <button class="secondary-button" type="button" id="importCsvButton">CSV importieren</button>
               <input id="csvImportInput" type="file" accept=".csv,text/csv" hidden />
             </div>
-            <label>
+            <label class="hidden-control">
               Station in diesem Projekt
               <select id="stationSelect"></select>
             </label>
@@ -314,7 +314,7 @@
     </main>
 
     <div class="toast" id="toast" role="status" aria-live="polite">Gespeichert</div>
-    <script src="env.js?v=supabase-sync-1"></script>
-    <script src="app.js?v=supabase-sync-1"></script>
+    <script src="env.js?v=local-first-stations-1"></script>
+    <script src="app.js?v=local-first-stations-1"></script>
   </body>
 </html>
