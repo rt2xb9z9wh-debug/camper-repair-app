@@ -4,6 +4,7 @@
   "private": true,
   "description": "Mobile Web-App fuer Campervan-Schadenaufnahme, Reparaturstatus und Materialplanung.",
   "scripts": {
+    "build": "node scripts/write-env.mjs",
     "start": "python3 -m http.server 4173 --bind 0.0.0.0",
     "check": "node --check app.js && node --check service-worker.js"
   }

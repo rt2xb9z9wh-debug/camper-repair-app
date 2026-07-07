@@ -16,9 +16,31 @@
     <link rel="icon" href="icon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="icon.svg" />
     <link rel="preload" href="assets/quick-fix-logo-black.png" as="image" />
-    <link rel="stylesheet" href="styles.css?v=invoice-fixes-1" />
+    <link rel="stylesheet" href="styles.css?v=supabase-sync-1" />
   </head>
   <body>
+    <section class="login-screen" id="loginScreen">
+      <div class="login-art" aria-hidden="true">
+        <div class="sun"></div>
+        <div class="van-shape">
+          <span></span>
+          <span></span>
+        </div>
+      </div>
+      <img class="login-logo" src="assets/quick-fix-logo-black.png" alt="Quick Fix" />
+      <div class="login-card">
+        <p>Cloud Sync</p>
+        <h1>Sicher arbeiten, nichts verlieren.</h1>
+        <label>
+          E-Mail
+          <input id="loginEmail" type="email" autocomplete="email" placeholder="du@example.com" />
+        </label>
+        <button class="primary-button" type="button" id="loginButton">Login-Link senden</button>
+        <button class="secondary-button" type="button" id="offlineButton">Offline weiterarbeiten</button>
+        <small id="loginHint">Nach dem Einrichten von Supabase bekommst du einen sicheren Magic Link per E-Mail.</small>
+      </div>
+    </section>
+
     <main class="phone-shell" aria-label="CamperFix Arbeits-App">
       <section class="screen">
         <header class="topbar">
@@ -36,7 +58,6 @@
           <div class="app-menu" id="appMenu" hidden>
             <button type="button" data-menu-action="profile">Profil & Preise</button>
             <button type="button" data-menu-action="import">CSV importieren</button>
-            <button type="button" data-menu-action="export">Arbeitsliste exportieren</button>
             <button type="button" data-menu-action="login">Anmelden</button>
             <button type="button" data-menu-action="logout">Abmelden</button>
           </div>
@@ -49,7 +70,7 @@
           </div>
           <div>
             <span>Quelle</span>
-            <strong>CSV + RS</strong>
+            <strong id="cloudStatus">Offline lokal</strong>
           </div>
         </section>
 
@@ -165,7 +186,6 @@
             <button class="primary-button slim" type="button" id="manualDamageButton">Schaden manuell hinzufügen</button>
             <div class="button-row import-row">
               <button class="secondary-button" type="button" id="importCsvButton">CSV importieren</button>
-              <button class="secondary-button" type="button" id="exportCsvButton">CSV exportieren</button>
               <input id="csvImportInput" type="file" accept=".csv,text/csv" hidden />
             </div>
             <label>
@@ -294,6 +314,7 @@
     </main>
 
     <div class="toast" id="toast" role="status" aria-live="polite">Gespeichert</div>
-    <script src="app.js?v=invoice-fixes-1"></script>
+    <script src="env.js?v=supabase-sync-1"></script>
+    <script src="app.js?v=supabase-sync-1"></script>
   </body>
 </html>

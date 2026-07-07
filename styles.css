@@ -28,6 +28,131 @@ body {
   font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
+.login-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: grid;
+  align-content: center;
+  gap: 1.25rem;
+  padding: 2rem 1rem;
+  overflow: hidden;
+  color: #eef6d2;
+  background:
+    linear-gradient(180deg, rgba(9, 17, 28, 0.62), rgba(9, 17, 28, 0.88)),
+    radial-gradient(circle at 74% 14%, rgba(188, 221, 38, 0.35), transparent 18rem),
+    #101820;
+}
+
+.login-screen.hidden {
+  display: none;
+}
+
+.login-logo {
+  position: relative;
+  z-index: 1;
+  width: min(15rem, 70vw);
+  margin: 0 auto;
+  filter: invert(1);
+}
+
+.login-card {
+  position: relative;
+  z-index: 1;
+  width: min(100%, 25rem);
+  margin: 0 auto;
+  padding: 1.1rem;
+  color: #f8fafc;
+  background: rgba(16, 28, 44, 0.84);
+  border: 1px solid rgba(188, 221, 38, 0.34);
+  border-radius: 0.9rem;
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.28);
+  backdrop-filter: blur(18px);
+}
+
+.login-card p,
+.login-card h1 {
+  margin: 0;
+}
+
+.login-card p {
+  color: #bddc26;
+  font-weight: 900;
+}
+
+.login-card h1 {
+  margin: 0.25rem 0 1rem;
+  font-size: 2rem;
+  line-height: 1.05;
+  font-weight: 800;
+}
+
+.login-card label {
+  color: #dbe6ef;
+}
+
+.login-card small {
+  display: block;
+  margin-top: 0.85rem;
+  color: #aebdca;
+  line-height: 1.35;
+}
+
+.login-card .secondary-button {
+  width: 100%;
+  margin-top: 0.65rem;
+}
+
+.login-card .primary-button {
+  width: 100%;
+}
+
+.login-art {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.sun {
+  position: absolute;
+  right: -4rem;
+  top: 3rem;
+  width: 12rem;
+  height: 12rem;
+  background: #bddc26;
+  border-radius: 50%;
+  opacity: 0.95;
+}
+
+.van-shape {
+  position: absolute;
+  right: -2rem;
+  bottom: 5rem;
+  width: 20rem;
+  height: 8rem;
+  border: 0.28rem solid rgba(248, 250, 252, 0.5);
+  border-radius: 4rem 1rem 1rem 1.8rem;
+  opacity: 0.4;
+}
+
+.van-shape span {
+  position: absolute;
+  bottom: -1.25rem;
+  width: 3rem;
+  height: 3rem;
+  background: #101820;
+  border: 0.35rem solid rgba(248, 250, 252, 0.62);
+  border-radius: 50%;
+}
+
+.van-shape span:first-child {
+  left: 3.2rem;
+}
+
+.van-shape span:last-child {
+  right: 3.2rem;
+}
+
 button,
 select,
 input,

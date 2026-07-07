@@ -2,6 +2,8 @@ const damageStorageKey = "camperfix:damage-state:v2";
 const projectStorageKey = "camperfix:project-state:v2";
 const noteKey = "camperfix:invoice-note:v2";
 const profileStorageKey = "camperfix:profile-state:v1";
+const syncMetaKey = "camperfix:sync-meta:v1";
+const supabaseConfig = window.CAMPERFIX_ENV || {};
 
 const seedProjects = [
   {
@@ -10,7 +12,7 @@ const seedProjects = [
     stations: ["Nantes", "Toulouse"],
     activeStation: "Nantes",
     period: "28.06. - 04.07.2026",
-    ratePerUnit: 95,
+    ratePerUnit: 28,
     damageIds: ["D-1001", "D-1002", "D-1004", "D-1005", "D-1009", "D-2004"],
     expenses: [
       { id: "E-1", type: "Hotel", amount: 320 },
@@ -23,7 +25,7 @@ const seedProjects = [
     stations: ["Bordeaux"],
     activeStation: "Bordeaux",
     period: "15.07. - 16.07.2026",
-    ratePerUnit: 95,
+    ratePerUnit: 28,
     damageIds: ["D-3001"],
     expenses: [],
   },
@@ -291,8 +293,13 @@ const manualDamageButton = document.querySelector("#manualDamageButton");
 const exportInvoiceButton = document.querySelector("#exportInvoiceButton");
 const exportReportButton = document.querySelector("#exportReportButton");
 const importCsvButton = document.querySelector("#importCsvButton");
-const exportCsvButton = document.querySelector("#exportCsvButton");
 const csvImportInput = document.querySelector("#csvImportInput");
+const loginScreen = document.querySelector("#loginScreen");
+const loginEmail = document.querySelector("#loginEmail");
+const loginButton = document.querySelector("#loginButton");
+const offlineButton = document.querySelector("#offlineButton");
+const loginHint = document.querySelector("#loginHint");
+const cloudStatus = document.querySelector("#cloudStatus");
 
 let damages = loadArray(damageStorageKey, seedDamages);
 let projects = loadArray(projectStorageKey, seedProjects);
@@ -303,6 +310,11 @@ let activeFilter = "open";
 let activeSourceFilter = "all";
 let damageScrollY = 0;
 const collapsedSourceGroups = new Set();
+let supabaseClient;
+let currentUser;
+let cloudReady = false;
+let cloudLoading = false;
+let saveTimer;
 
 hydrateDamageMetadata();
 
@@ -335,7 +347,7 @@ function hydrateDamageMetadata() {
 function loadProfile() {
   const fallback = {
     name: "Quick Fix",
-    unitRate: 95,
+    unitRate: 28,
     expenseRates: {
       Spesen: 28,
       Kilometer: 0.42,
@@ -358,6 +370,7 @@ function loadProfile() {
 
 function persistProfile() {
   localStorage.setItem(profileStorageKey, JSON.stringify(profile));
+  scheduleCloudSave();
 }
 
 function activeProject() {
@@ -371,7 +384,7 @@ function normalizeProject(project) {
   if (!project.stations) project.stations = project.station ? [project.station] : ["Nantes"];
   if (!project.activeStation) project.activeStation = project.stations[0];
   if (!project.expenses) project.expenses = [];
-  if (!project.ratePerUnit) project.ratePerUnit = 95;
+  if (!project.ratePerUnit) project.ratePerUnit = 28;
 }
 
 function currentTime() {
@@ -393,6 +406,117 @@ function showToast(message) {
   showToast.timeout = window.setTimeout(() => toast.classList.remove("show"), 1800);
 }
 
+function setCloudStatus(text) {
+  if (cloudStatus) cloudStatus.textContent = text;
+}
+
+async function initSupabase() {
+  const hasConfig = Boolean(supabaseConfig.supabaseUrl && supabaseConfig.supabaseAnonKey);
+  if (!hasConfig) {
+    setCloudStatus("Offline lokal");
+    loginHint.textContent = "Supabase ist noch nicht verbunden. Du kannst offline weiterarbeiten; Cloud Sync kommt nach dem Einrichten.";
+    loginButton.disabled = true;
+    loginScreen.classList.remove("hidden");
+    return;
+  }
+
+  const module = await import("https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm");
+  supabaseClient = module.createClient(supabaseConfig.supabaseUrl, supabaseConfig.supabaseAnonKey);
+  const { data } = await supabaseClient.auth.getSession();
+  currentUser = data.session?.user;
+  supabaseClient.auth.onAuthStateChange((_event, session) => {
+    currentUser = session?.user;
+    if (currentUser) {
+      loginScreen.classList.add("hidden");
+      loadCloudState();
+    } else {
+      cloudReady = false;
+      setCloudStatus("Offline lokal");
+      loginScreen.classList.remove("hidden");
+    }
+  });
+
+  if (currentUser) {
+    loginScreen.classList.add("hidden");
+    await loadCloudState();
+  } else {
+    setCloudStatus("Login bereit");
+    loginScreen.classList.remove("hidden");
+  }
+}
+
+function collectNotes() {
+  return Object.fromEntries(projects.map((project) => [project.id, localStorage.getItem(`${noteKey}:${project.id}`) || ""]));
+}
+
+function appStatePayload() {
+  return {
+    damages,
+    projects,
+    profile,
+    activeProjectId,
+    selectedId,
+    notes: collectNotes(),
+    savedAt: new Date().toISOString(),
+  };
+}
+
+function applyCloudState(data) {
+  if (!data || typeof data !== "object") return;
+  if (Array.isArray(data.damages)) damages = data.damages;
+  if (Array.isArray(data.projects) && data.projects.length) projects = data.projects;
+  if (data.profile) profile = { ...profile, ...data.profile, expenseRates: { ...profile.expenseRates, ...(data.profile.expenseRates || {}) } };
+  if (data.activeProjectId && projects.some((project) => project.id === data.activeProjectId)) activeProjectId = data.activeProjectId;
+  if (data.selectedId) selectedId = data.selectedId;
+  Object.entries(data.notes || {}).forEach(([projectId, value]) => localStorage.setItem(`${noteKey}:${projectId}`, value || ""));
+  localStorage.setItem(damageStorageKey, JSON.stringify(damages));
+  localStorage.setItem(projectStorageKey, JSON.stringify(projects));
+  localStorage.setItem(profileStorageKey, JSON.stringify(profile));
+  invoiceNote.value = localStorage.getItem(`${noteKey}:${activeProjectId}`) || "";
+}
+
+async function loadCloudState() {
+  if (!supabaseClient || !currentUser || cloudLoading) return;
+  cloudLoading = true;
+  setCloudStatus("Cloud lädt...");
+  const { data, error } = await supabaseClient.from("app_state").select("data, updated_at").eq("user_id", currentUser.id).maybeSingle();
+  cloudLoading = false;
+  if (error) {
+    setCloudStatus("Cloud Fehler");
+    showToast("Cloud-Tabelle fehlt oder ist nicht erreichbar");
+    return;
+  }
+  if (data?.data) {
+    applyCloudState(data.data);
+  }
+  cloudReady = true;
+  setCloudStatus(`Cloud aktiv`);
+  render();
+  scheduleCloudSave();
+}
+
+function scheduleCloudSave() {
+  if (!cloudReady || !supabaseClient || !currentUser) return;
+  window.clearTimeout(saveTimer);
+  saveTimer = window.setTimeout(saveCloudState, 700);
+}
+
+async function saveCloudState() {
+  if (!cloudReady || !supabaseClient || !currentUser) return;
+  setCloudStatus("Cloud speichert...");
+  const { error } = await supabaseClient.from("app_state").upsert({
+    user_id: currentUser.id,
+    data: appStatePayload(),
+    updated_at: new Date().toISOString(),
+  });
+  if (error) {
+    setCloudStatus("Cloud Fehler");
+    return;
+  }
+  localStorage.setItem(syncMetaKey, new Date().toISOString());
+  setCloudStatus("Cloud gespeichert");
+}
+
 function e(value) {
   return String(value ?? "").replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" })[char]);
 }
@@ -410,6 +534,7 @@ function persist() {
   localStorage.setItem(damageStorageKey, JSON.stringify(damages));
   localStorage.setItem(projectStorageKey, JSON.stringify(projects));
   lastUpdate.textContent = currentTime();
+  scheduleCloudSave();
 }
 
 function statusType(status) {
@@ -1123,7 +1248,7 @@ function createProject() {
     .map((item) => item.trim())
     .filter(Boolean);
   const period = window.prompt("Zeitraum", "nächste Woche") || "offen";
-  const rate = Number(window.prompt("Satz je Einheit", "95") || 95);
+  const rate = Number(window.prompt("Satz je Einheit", String(profile.unitRate || 28)) || profile.unitRate || 28);
   const project = {
     id: `project-${Date.now()}`,
     name,
@@ -1183,6 +1308,38 @@ function render() {
   renderDetail();
 }
 
+async function sendLoginLink() {
+  if (!supabaseClient) {
+    showToast("Supabase ist noch nicht eingerichtet");
+    return;
+  }
+  const email = loginEmail.value.trim();
+  if (!email) {
+    showToast("E-Mail fehlt");
+    return;
+  }
+  const { error } = await supabaseClient.auth.signInWithOtp({
+    email,
+    options: { emailRedirectTo: window.location.href.split("#")[0] },
+  });
+  if (error) {
+    loginHint.textContent = "Login-Link konnte nicht gesendet werden.";
+    showToast("Login fehlgeschlagen");
+    return;
+  }
+  loginHint.textContent = "Check deine E-Mail. Der Link bringt dich wieder hierher zurück.";
+  showToast("Login-Link gesendet");
+}
+
+async function signOut() {
+  if (supabaseClient) await supabaseClient.auth.signOut();
+  currentUser = undefined;
+  cloudReady = false;
+  loginScreen.classList.remove("hidden");
+  setCloudStatus("Offline lokal");
+  showToast("Abgemeldet");
+}
+
 document.addEventListener("click", (event) => {
   const nav = event.target.closest(".nav-item");
   if (nav) setView(nav.dataset.view);
@@ -1192,9 +1349,8 @@ document.addEventListener("click", (event) => {
     appMenu.hidden = true;
     if (menuAction.dataset.menuAction === "profile") editProfile();
     if (menuAction.dataset.menuAction === "import") csvImportInput.click();
-    if (menuAction.dataset.menuAction === "export") exportWorkCsv();
-    if (menuAction.dataset.menuAction === "login") showToast("Login kommt später, CSV läuft ohne Konto");
-    if (menuAction.dataset.menuAction === "logout") showToast("Abgemeldet auf diesem Gerät");
+    if (menuAction.dataset.menuAction === "login") loginScreen.classList.remove("hidden");
+    if (menuAction.dataset.menuAction === "logout") signOut();
   }
 
   const station = event.target.closest("[data-station]");
@@ -1298,14 +1454,19 @@ addExpenseButton.addEventListener("click", addExpense);
 exportInvoiceButton.addEventListener("click", () => exportDocument("invoice"));
 exportReportButton.addEventListener("click", () => exportDocument("report"));
 importCsvButton.addEventListener("click", () => csvImportInput.click());
-exportCsvButton.addEventListener("click", exportWorkCsv);
 csvImportInput.addEventListener("change", () => {
   importCsvFile(csvImportInput.files[0]);
   csvImportInput.value = "";
 });
+loginButton.addEventListener("click", sendLoginLink);
+offlineButton.addEventListener("click", () => {
+  loginScreen.classList.add("hidden");
+  showToast("Offline-Modus");
+});
 
 saveInvoiceNote.addEventListener("click", () => {
   localStorage.setItem(`${noteKey}:${activeProjectId}`, invoiceNote.value.trim());
+  scheduleCloudSave();
   showToast("Rechnungsnotiz gespeichert");
 });
 
@@ -1317,6 +1478,10 @@ todayLabel.textContent = todayText();
 lastUpdate.textContent = currentTime();
 invoiceNote.value = localStorage.getItem(`${noteKey}:${activeProjectId}`) || "";
 render();
+initSupabase().catch(() => {
+  setCloudStatus("Offline lokal");
+  loginScreen.classList.remove("hidden");
+});
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
