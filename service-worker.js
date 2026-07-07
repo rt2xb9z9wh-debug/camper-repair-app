@@ -1,5 +1,5 @@
-const cacheName = "camperfix-v5";
-const appFiles = ["./", "./index.html", "./styles.css", "./app.js", "./manifest.webmanifest", "./icon.svg"];
+const cacheName = "camperfix-v7";
+const appFiles = ["./", "./index.html", "./styles.css", "./app.js", "./manifest.webmanifest", "./icon.svg", "./assets/quick-fix-logo-black.png"];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
@@ -19,6 +19,7 @@ self.addEventListener("activate", (event) => {
 
 self.addEventListener("fetch", (event) => {
   if (event.request.method !== "GET") return;
+  if (new URL(event.request.url).pathname.startsWith("/api/")) return;
 
   event.respondWith(
     caches.match(event.request).then((cached) => {

@@ -15,7 +15,8 @@
     <link rel="manifest" href="manifest.webmanifest" />
     <link rel="icon" href="icon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="icon.svg" />
-    <link rel="stylesheet" href="styles.css?v=priority-flow-1" />
+    <link rel="preload" href="assets/quick-fix-logo-black.png" as="image" />
+    <link rel="stylesheet" href="styles.css?v=quickfix-workflow-1" />
   </head>
   <body>
     <main class="phone-shell" aria-label="CamperFix Arbeits-App">
@@ -23,15 +24,22 @@
         <header class="topbar">
           <div>
             <p class="eyebrow" id="todayLabel">Heute</p>
-            <h1>Schäden</h1>
+            <img class="brand-logo" src="assets/quick-fix-logo-black.png" alt="Quick Fix" />
           </div>
-          <a class="icon-button" href="https://airtable.com/appg5hlXJSrJyLEEE/shrLPAOuUGNaBQzUE/tblgbK6aCvkplwR0T" aria-label="Airtable öffnen">
+          <button class="icon-button" type="button" id="menuButton" aria-label="Menü öffnen">
             <svg viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
-              <path d="M15 3h6v6" />
-              <path d="m10 14 11-11" />
+              <path d="M4 7h16" />
+              <path d="M4 12h16" />
+              <path d="M4 17h16" />
             </svg>
-          </a>
+          </button>
+          <div class="app-menu" id="appMenu" hidden>
+            <button type="button" data-menu-action="profile">Profil & Preise</button>
+            <button type="button" data-menu-action="sync">Airtable aktualisieren</button>
+            <a href="https://airtable.com/appg5hlXJSrJyLEEE/shrLPAOuUGNaBQzUE/tblgbK6aCvkplwR0T" target="_blank" rel="noreferrer">Airtable öffnen</a>
+            <button type="button" data-menu-action="login">Anmelden</button>
+            <button type="button" data-menu-action="logout">Abmelden</button>
+          </div>
         </header>
 
         <section class="status-strip">
@@ -79,9 +87,9 @@
                 <path d="M10.3 3.9 2.6 17.3A2 2 0 0 0 4.3 20h15.4a2 2 0 0 0 1.7-2.7L13.7 3.9a2 2 0 0 0-3.4 0Z" />
               </svg>
               <div>
-                <h2>Offen</h2>
-                <strong id="openCount">0</strong>
-                <span>zu prüfen</span>
+              <h2>Repariert</h2>
+                <strong id="doneCount">0</strong>
+                <span>fertig</span>
               </div>
             </article>
 
@@ -90,9 +98,9 @@
                 <path d="M20 6 9 17l-5-5" />
               </svg>
               <div>
-                <h2>Repariert</h2>
-                <strong id="doneCount">0</strong>
-                <span>fertig</span>
+                <h2>Einheiten</h2>
+                <strong id="unitCount">0</strong>
+                <span>abrechenbar</span>
               </div>
             </article>
 
@@ -106,9 +114,9 @@
                 <path d="M3 18h.01" />
               </svg>
               <div>
-                <h2>Einheiten</h2>
-                <strong id="unitCount">0</strong>
-                <span>abrechenbar</span>
+                <h2>Offen rot</h2>
+                <strong id="redOpenCount">0</strong>
+                <span>im Projekt</span>
               </div>
             </article>
 
@@ -119,9 +127,9 @@
                 <path d="M5 19h14" />
               </svg>
               <div>
-                <h2>Teile</h2>
-                <strong id="partsCount">0</strong>
-                <span>Bestellung</span>
+                <h2>Projekt</h2>
+                <strong id="projectDamageCount">0</strong>
+                <span>geladen</span>
               </div>
             </article>
           </section>
@@ -132,7 +140,7 @@
                 <p>Abarbeitung</p>
                 <h2>Heute wichtig</h2>
               </div>
-              <span class="pill" id="stationPill">Demo</span>
+              <span class="pill" id="stationPill">Projekt</span>
             </div>
             <div class="progress-row">
               <div>
@@ -154,6 +162,7 @@
               </div>
               <span class="pill" id="damageStation">Station</span>
             </div>
+            <button class="primary-button slim" type="button" id="manualDamageButton">Schaden manuell hinzufügen</button>
             <label>
               Station in diesem Projekt
               <select id="stationSelect"></select>
@@ -178,6 +187,12 @@
                 <h2>Neu übernehmen</h2>
               </div>
               <span class="pill" id="airtableStation">Station</span>
+            </div>
+            <div class="segmented compact source-tabs" role="group" aria-label="Airtable Sortierung">
+              <button type="button" class="selected" data-source-filter="all">Alle</button>
+              <button type="button" data-source-filter="notRentable">Nicht mietbar</button>
+              <button type="button" data-source-filter="parts">Teile</button>
+              <button type="button" data-source-filter="samePlate">Gleicher Van</button>
             </div>
             <div id="sourceList" class="source-list"></div>
           </section>
@@ -229,6 +244,10 @@
               <textarea id="invoiceNote" rows="4" placeholder="z. B. Tag 1, besondere Teile, Kunde informiert..."></textarea>
             </label>
             <button class="primary-button" type="button" id="saveInvoiceNote">Rechnungsnotiz speichern</button>
+            <div class="button-row exports">
+              <button class="secondary-button" type="button" id="exportInvoiceButton">Rechnung PDF</button>
+              <button class="secondary-button" type="button" id="exportReportButton">Damage Report</button>
+            </div>
           </section>
         </section>
       </section>
@@ -269,6 +288,6 @@
     </main>
 
     <div class="toast" id="toast" role="status" aria-live="polite">Gespeichert</div>
-    <script src="app.js?v=priority-flow-1"></script>
+    <script src="app.js?v=quickfix-workflow-1"></script>
   </body>
 </html>

@@ -1,6 +1,7 @@
 const damageStorageKey = "camperfix:damage-state:v2";
 const projectStorageKey = "camperfix:project-state:v2";
 const noteKey = "camperfix:invoice-note:v2";
+const profileStorageKey = "camperfix:profile-state:v1";
 
 const seedProjects = [
   {
@@ -41,9 +42,11 @@ const seedDamages = [
     units: 1,
     warranty: "yes",
     comment: "",
+    orderComment: "",
     sourceActive: true,
     rentability: "Not rentable",
     flagged: true,
+    photos: [],
   },
   {
     id: "D-1002",
@@ -57,9 +60,11 @@ const seedDamages = [
     units: 1,
     warranty: "yes",
     comment: "",
+    orderComment: "",
     sourceActive: true,
     rentability: "Rentable",
     flagged: false,
+    photos: [],
   },
   {
     id: "D-1003",
@@ -73,9 +78,11 @@ const seedDamages = [
     units: 1,
     warranty: "yes",
     comment: "",
+    orderComment: "",
     sourceActive: true,
     rentability: "Rentable",
     flagged: false,
+    photos: [],
   },
   {
     id: "D-1004",
@@ -89,9 +96,11 @@ const seedDamages = [
     units: 3,
     warranty: "",
     comment: "",
+    orderComment: "",
     sourceActive: false,
     rentability: "Rentable",
     flagged: false,
+    photos: [],
   },
   {
     id: "D-1005",
@@ -105,9 +114,11 @@ const seedDamages = [
     units: 1,
     warranty: "",
     comment: "Geprueft, aktuell kein Wassereintritt erkennbar.",
+    orderComment: "",
     sourceActive: false,
     rentability: "Not rentable",
     flagged: true,
+    photos: [],
   },
   {
     id: "D-1006",
@@ -121,9 +132,11 @@ const seedDamages = [
     units: 0,
     warranty: "",
     comment: "Antrieb auf einer Seite defekt, Teil erforderlich.",
+    orderComment: "Electric linear actuator driver side pruefen/bestellen.",
     sourceActive: true,
     rentability: "Not rentable",
     flagged: true,
+    photos: [],
   },
   {
     id: "D-1009",
@@ -137,9 +150,11 @@ const seedDamages = [
     units: 1,
     warranty: "",
     comment: "Provisorisch abgedichtet.",
+    orderComment: "New roof window, large and small option klaeren.",
     sourceActive: false,
     rentability: "Not rentable",
     flagged: true,
+    photos: [],
   },
   {
     id: "D-2001",
@@ -153,9 +168,11 @@ const seedDamages = [
     units: 1,
     warranty: "yes",
     comment: "",
+    orderComment: "",
     sourceActive: true,
     rentability: "Rentable",
     flagged: true,
+    photos: [],
   },
   {
     id: "D-2002",
@@ -169,9 +186,11 @@ const seedDamages = [
     units: 1,
     warranty: "",
     comment: "",
+    orderComment: "",
     sourceActive: true,
     rentability: "Not rentable",
     flagged: true,
+    photos: [],
   },
   {
     id: "D-2003",
@@ -185,9 +204,11 @@ const seedDamages = [
     units: 1,
     warranty: "",
     comment: "",
+    orderComment: "",
     sourceActive: true,
     rentability: "Rentable",
     flagged: false,
+    photos: [],
   },
   {
     id: "D-2004",
@@ -201,9 +222,11 @@ const seedDamages = [
     units: 2,
     warranty: "",
     comment: "Pins ersetzt, Funktion getestet.",
+    orderComment: "",
     sourceActive: false,
     rentability: "Rentable",
     flagged: false,
+    photos: [],
   },
   {
     id: "D-3001",
@@ -217,9 +240,11 @@ const seedDamages = [
     units: 1,
     warranty: "",
     comment: "",
+    orderComment: "",
     sourceActive: true,
     rentability: "Rentable",
     flagged: false,
+    photos: [],
   },
   {
     id: "D-3002",
@@ -233,9 +258,11 @@ const seedDamages = [
     units: 1,
     warranty: "",
     comment: "",
+    orderComment: "",
     sourceActive: true,
     rentability: "Not rentable",
     flagged: true,
+    photos: [],
   },
 ];
 
@@ -258,12 +285,23 @@ const addExpenseButton = document.querySelector("#addExpenseButton");
 const newProjectButton = document.querySelector("#newProjectButton");
 const editProjectButton = document.querySelector("#editProjectButton");
 const deleteProjectButton = document.querySelector("#deleteProjectButton");
+const menuButton = document.querySelector("#menuButton");
+const appMenu = document.querySelector("#appMenu");
+const manualDamageButton = document.querySelector("#manualDamageButton");
+const exportInvoiceButton = document.querySelector("#exportInvoiceButton");
+const exportReportButton = document.querySelector("#exportReportButton");
 
 let damages = loadArray(damageStorageKey, seedDamages);
 let projects = loadArray(projectStorageKey, seedProjects);
+let profile = loadProfile();
 let activeProjectId = projects[0]?.id;
 let selectedId = activeProject()?.damageIds[0];
 let activeFilter = "all";
+let activeSourceFilter = "all";
+let damageScrollY = 0;
+const collapsedSourceGroups = new Set();
+
+hydrateDamageMetadata();
 
 function loadArray(key, fallback) {
   const saved = localStorage.getItem(key);
@@ -274,6 +312,49 @@ function loadArray(key, fallback) {
   } catch {
     return structuredClone(fallback);
   }
+}
+
+function hydrateDamageMetadata() {
+  const seedById = new Map(seedDamages.map((damage) => [damage.id, damage]));
+  damages = damages.map((damage) => {
+    const seed = seedById.get(damage.id);
+    if (!seed) return damage;
+    return {
+      ...damage,
+      rentability: damage.rentability || seed.rentability,
+      flagged: typeof damage.flagged === "boolean" ? damage.flagged : seed.flagged,
+      orderComment: damage.orderComment || seed.orderComment || "",
+      photos: Array.isArray(damage.photos) ? damage.photos : seed.photos || [],
+    };
+  });
+}
+
+function loadProfile() {
+  const fallback = {
+    name: "Quick Fix",
+    unitRate: 95,
+    expenseRates: {
+      Spesen: 28,
+      Kilometer: 0.42,
+      Fahrstunden: 35,
+      Flug: 0,
+      Hotel: 0,
+      Parken: 0,
+      "Uber etc.": 0,
+      "Sonstige Kosten": 0,
+    },
+  };
+  const saved = localStorage.getItem(profileStorageKey);
+  if (!saved) return fallback;
+  try {
+    return { ...fallback, ...JSON.parse(saved), expenseRates: { ...fallback.expenseRates, ...(JSON.parse(saved).expenseRates || {}) } };
+  } catch {
+    return fallback;
+  }
+}
+
+function persistProfile() {
+  localStorage.setItem(profileStorageKey, JSON.stringify(profile));
 }
 
 function activeProject() {
@@ -309,6 +390,19 @@ function showToast(message) {
   showToast.timeout = window.setTimeout(() => toast.classList.remove("show"), 1800);
 }
 
+function e(value) {
+  return String(value ?? "").replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" })[char]);
+}
+
+function safeUrl(value) {
+  try {
+    const url = new URL(value);
+    return ["http:", "https:"].includes(url.protocol) ? url.href : "";
+  } catch {
+    return "";
+  }
+}
+
 function persist() {
   localStorage.setItem(damageStorageKey, JSON.stringify(damages));
   localStorage.setItem(projectStorageKey, JSON.stringify(projects));
@@ -324,6 +418,10 @@ function statusType(status) {
 
 function projectDamages(project = activeProject()) {
   return project.damageIds.map((id) => damages.find((damage) => damage.id === id)).filter(Boolean);
+}
+
+function isProjectDamage(id, project = activeProject()) {
+  return project.damageIds.includes(id);
 }
 
 function sourceDamages(project = activeProject()) {
@@ -365,7 +463,20 @@ function filteredDamages() {
 }
 
 function filteredSourceDamages() {
-  return sourceDamages().filter(matchesSearch);
+  const stationRows = sourceDamages();
+  const plateCounts = countByPlate(stationRows);
+  return stationRows.filter((damage) => {
+    const matchesFilter =
+      activeSourceFilter === "all" ||
+      (activeSourceFilter === "notRentable" && damage.rentability === "Not rentable") ||
+      (activeSourceFilter === "parts" && hasParts(damage)) ||
+      (activeSourceFilter === "samePlate" && plateCounts.get(damage.plate) > 1);
+    return matchesFilter && matchesSearch(damage);
+  });
+}
+
+function countByPlate(rows) {
+  return rows.reduce((map, damage) => map.set(damage.plate, (map.get(damage.plate) || 0) + 1), new Map());
 }
 
 function hasParts(damage) {
@@ -384,11 +495,29 @@ function priorityScore(damage) {
   return score;
 }
 
+function repairHelp(damage) {
+  const text = `${damage.description} ${damage.comment} ${damage.orderComment}`.toLowerCase();
+  if (text.includes("water") || text.includes("leak")) {
+    return "Erst Dichtung, Ablauf und sichtbare Risse prüfen. Danach mit Wasser gezielt 5 Minuten testen und innen kontrollieren, bevor Teile bestellt werden.";
+  }
+  if (text.includes("roof") || text.includes("pop up")) {
+    return "Mechanik links/rechts vergleichen, Führung reinigen, Endlagen prüfen und Antrieb nur ohne Gewalt testen. Wenn einseitig blockiert: Actuator/Schiene dokumentieren.";
+  }
+  if (text.includes("blind") || text.includes("screen") || text.includes("curtain")) {
+    return "Führung und Halter zuerst prüfen. Oft reicht neu einhängen oder Clip ersetzen; bei gerissenem Rahmen direkt Needs Order mit Seite/Position notieren.";
+  }
+  if (text.includes("door") || text.includes("drawer") || text.includes("latch")) {
+    return "Spiel, Scharnier, Verriegelung und Schrauben prüfen. Erst ausrichten und nachziehen, danach testen ob Fahrtvibration die Ursache wiederholt.";
+  }
+  return "Erst Ursache sichtbar machen: Funktion testen, lose Teile sichern, Foto/Kommentar ergänzen, dann entscheiden ob Reparatur vor Ort reicht oder Needs Order nötig ist.";
+}
+
 function setView(viewName) {
   views.forEach((view) => view.classList.toggle("active", view.dataset.viewPanel === viewName));
   navButtons.forEach((button) => button.classList.toggle("active", button.dataset.view === viewName));
   if (viewName === "detail" && !selectedId) selectedId = projectDamages()[0]?.id;
   render();
+  if (viewName === "damages" && damageScrollY) window.requestAnimationFrame(() => window.scrollTo(0, damageScrollY));
 }
 
 function setProject(projectId) {
@@ -420,7 +549,7 @@ function renderProjectControls() {
   document.querySelector("#projectTitle").textContent = project.name;
   document.querySelector("#projectStation").textContent = project.activeStation;
   document.querySelector("#projectPeriod").textContent = project.period;
-  document.querySelector("#stationPill").textContent = project.activeStation;
+  document.querySelector("#stationPill").textContent = project.name;
   document.querySelector("#damageProjectName").textContent = project.name;
   document.querySelector("#damageStation").textContent = project.activeStation;
   document.querySelector("#airtableStation").textContent = project.activeStation;
@@ -433,7 +562,7 @@ function renderProjectControls() {
       const isInProject = project.stations.includes(station);
       return `
         <button type="button" class="station-button ${project.activeStation === station ? "selected" : ""}" data-station="${station}">
-          <strong>${station}</strong>
+          <strong>${e(station)}</strong>
           <span>${isInProject ? `${count} im Projekt` : "hinzufügen"}</span>
         </button>
       `;
@@ -447,6 +576,7 @@ function renderDashboard() {
   const done = rows.filter((damage) => damage.status === "Repariert").length;
   const open = rows.filter((damage) => !["Repariert", "Irreparabel"].includes(damage.status)).length;
   const parts = rows.filter((damage) => damage.partDecision || damage.orderStatus).length;
+  const redOpen = rows.filter((damage) => damage.flagged && !["Repariert", "Irreparabel"].includes(damage.status)).length;
   const units = rows.reduce((sum, damage) => sum + Number(damage.units || 0), 0);
   const progress = rows.length ? Math.round((done / rows.length) * 100) : 0;
   const archived = rows.filter((damage) => !damage.sourceActive).length;
@@ -454,10 +584,10 @@ function renderDashboard() {
   const revenue = units * Number(project.ratePerUnit || 0);
   const profit = revenue - expenses;
 
-  document.querySelector("#openCount").textContent = open;
   document.querySelector("#doneCount").textContent = done;
-  document.querySelector("#partsCount").textContent = parts;
   document.querySelector("#unitCount").textContent = units;
+  document.querySelector("#redOpenCount").textContent = redOpen;
+  document.querySelector("#projectDamageCount").textContent = rows.length;
   document.querySelector("#sourceCount").textContent = sourceDamages(project).length;
   document.querySelector("#archiveCount").textContent = archived;
   document.querySelector("#progressText").textContent = `${progress}%`;
@@ -476,13 +606,14 @@ function renderDashboard() {
   document.querySelector("#priorityList").innerHTML =
     rows
       .filter((damage) => damage.status !== "Repariert")
+      .sort((a, b) => priorityScore(b) - priorityScore(a))
       .slice(0, 4)
       .map(
         (damage) => `
           <button type="button" class="priority-item" data-open-detail="${damage.id}">
-            <span>${damage.plate}</span>
-            <strong>${damage.description}</strong>
-            <em>${damage.orderStatus || damage.status}</em>
+            <span>${e(damage.plate)}</span>
+            <strong>${e(damage.description)}</strong>
+            <em>${e(damage.orderStatus || damage.status)}</em>
           </button>
         `,
       )
@@ -505,8 +636,8 @@ function renderList() {
         <button type="button" class="damage-row ${selectedId === damage.id ? "selected" : ""} ${damage.flagged ? "flagged" : ""}" data-damage-id="${damage.id}">
           <span class="status-dot ${statusType(damage.status)}"></span>
           <div>
-            <strong>${damage.plate} · ${damage.id}</strong>
-            <span>${damage.description}</span>
+            <strong>${e(damage.plate)} · ${e(damage.id)}</strong>
+            <span>${e(damage.description)}</span>
             <small>${damage.sourceActive ? "Airtable aktiv" : "im Projekt gesichert"} · ${rentabilityLabel(damage)} · ${hasParts(damage) ? "Teile nötig" : "keine Teile"}</small>
           </div>
           <em>${damage.units} E</em>
@@ -526,6 +657,7 @@ function renderSourceList() {
     { key: "rentable-no-parts", title: "Rentable · keine Teile", filter: (damage) => damage.rentability !== "Not rentable" && !hasParts(damage) },
   ];
   const rows = filteredSourceDamages().sort((a, b) => priorityScore(b) - priorityScore(a));
+  const plateCounts = countByPlate(sourceDamages());
 
   sourceList.innerHTML =
     groups
@@ -534,24 +666,29 @@ function renderSourceList() {
         if (!groupRows.length) return "";
         return `
           <section class="source-group">
-            <div class="source-group-head">
-              <strong>${group.title}</strong>
+            <button type="button" class="source-group-head" data-toggle-source="${group.key}">
+              <strong>${e(group.title)}</strong>
               <span>${groupRows.length}</span>
-            </div>
-            ${groupRows
+            </button>
+            <div class="source-group-body ${collapsedSourceGroups.has(group.key) ? "collapsed" : ""}">
+              ${groupRows
               .map(
                 (damage) => `
                   <article class="source-item ${damage.flagged ? "flagged" : ""}">
                     <div>
-                      <strong>${damage.plate} · ${damage.id}</strong>
-                      <span>${damage.description}</span>
-                      <small>${rentabilityLabel(damage)} · ${hasParts(damage) ? damage.orderStatus || damage.partDecision : "keine Teile nötig"}</small>
+                      <strong>${e(damage.plate)} · ${e(damage.id)}</strong>
+                      <span>${e(damage.description)}</span>
+                      <small>${e(rentabilityLabel(damage))} · ${e(hasParts(damage) ? damage.orderStatus || damage.partDecision : "keine Teile nötig")}${plateCounts.get(damage.plate) > 1 ? ` · ${plateCounts.get(damage.plate)} Schäden am Van` : ""}</small>
                     </div>
-                    <button type="button" data-import-damage="${damage.id}">Übernehmen</button>
+                    <div class="source-actions">
+                      <button type="button" data-preview-damage="${damage.id}">Ansehen</button>
+                      <button type="button" data-import-damage="${damage.id}">Übernehmen</button>
+                    </div>
                   </article>
                 `,
               )
               .join("")}
+            </div>
           </section>
         `;
       })
@@ -567,20 +704,28 @@ function renderDetail() {
   selectedId = damage.id;
 
   damageDetail.innerHTML = `
+    <button class="secondary-button slim back-button" type="button" id="backToDamages">Zurück zu Schäden</button>
     <div class="section-head">
       <div>
-        <p>${damage.plate} · ${damage.id}</p>
-        <h2>${damage.description}</h2>
+        <p>${e(damage.plate)} · ${e(damage.id)}</p>
+        <h2>${e(damage.description)}</h2>
       </div>
       <span class="status-badge ${statusType(damage.status)}">${damage.status}</span>
     </div>
 
     <div class="field-grid">
-      <div><span>Modell</span><strong>${damage.model}</strong></div>
-      <div><span>Station</span><strong>${damage.station}</strong></div>
-      <div><span>Teile</span><strong>${damage.orderStatus || "keine"}</strong></div>
+      <div><span>Modell</span><strong>${e(damage.model)}</strong></div>
+      <div><span>Station</span><strong>${e(damage.station)}</strong></div>
+      <div><span>Teile</span><strong>${e(damage.orderStatus || "keine")}</strong></div>
       <div><span>Priorität</span><strong>${rentabilityLabel(damage)}</strong></div>
     </div>
+
+    ${renderPhotoLinks(damage)}
+
+    <section class="ai-help">
+      <strong>KI-Ersthilfe</strong>
+      <p>${e(repairHelp(damage))}</p>
+    </section>
 
     <label>
       Status
@@ -600,10 +745,32 @@ function renderDetail() {
 
     <label>
       Kommentar
-      <textarea id="detailComment" rows="5">${damage.comment || ""}</textarea>
+      <textarea id="detailComment" rows="5">${e(damage.comment || "")}</textarea>
     </label>
 
-    <button class="primary-button" type="button" id="saveDetail">Schaden im Projekt sichern</button>
+    <label>
+      Needs Order Kommentar
+      <textarea id="orderComment" rows="4" placeholder="Was soll die Firma bestellen? Seite, Position, Menge...">${e(damage.orderComment || "")}</textarea>
+    </label>
+
+    <div class="button-row detail-actions">
+      ${isProjectDamage(damage.id) ? "" : `<button class="secondary-button" type="button" data-import-damage="${damage.id}">Ins Projekt übernehmen</button>`}
+      <button class="primary-button" type="button" id="saveDetail">Schaden im Projekt sichern</button>
+    </div>
+  `;
+}
+
+function renderPhotoLinks(damage) {
+  const photos = Array.isArray(damage.photos) ? damage.photos.filter(Boolean) : [];
+  if (!photos.length) return `<p class="photo-note">Keine Airtable-Fotos in diesem Datensatz.</p>`;
+  return `
+    <div class="photo-links">
+      ${photos
+    .map((url, index) => safeUrl(url))
+    .filter(Boolean)
+    .map((url, index) => `<a href="${url}" target="_blank" rel="noreferrer">Foto ${index + 1}</a>`)
+        .join("")}
+    </div>
   `;
 }
 
@@ -627,6 +794,75 @@ function importDamage(id) {
   showToast("Schaden ins Projekt übernommen");
 }
 
+function createManualDamage() {
+  const project = activeProject();
+  const plate = window.prompt("Kennzeichen", "");
+  if (!plate) return;
+  const description = window.prompt("Schadenbeschreibung", "");
+  if (!description) return;
+  const needsParts = window.confirm("Teile nötig / Needs Order?");
+  const notRentable = window.confirm("Nicht mietbar / dringend rot markieren?");
+  const id = `MAN-${Date.now()}`;
+  const damage = {
+    id,
+    plate: plate.trim(),
+    model: "Manuell",
+    station: project.activeStation,
+    description: description.trim(),
+    status: "Offen",
+    partDecision: needsParts ? "Part(s) Needed" : "",
+    orderStatus: needsParts ? "Needs Order" : "",
+    units: 0,
+    warranty: "",
+    comment: "",
+    orderComment: "",
+    sourceActive: false,
+    rentability: notRentable ? "Not rentable" : "Rentable",
+    flagged: notRentable,
+    photos: [],
+  };
+  damages = [...damages, damage];
+  projects = projects.map((item) => (item.id === project.id ? { ...item, damageIds: [...item.damageIds, id] } : item));
+  selectedId = id;
+  persist();
+  setView("detail");
+  showToast("Manueller Schaden angelegt");
+}
+
+function editProfile() {
+  const name = window.prompt("Name / Firma", profile.name) || profile.name;
+  const unitRate = Number(window.prompt("Verdienst je Einheit", String(profile.unitRate)) || profile.unitRate);
+  const kilometer = Number(window.prompt("Kilometer-Satz", String(profile.expenseRates.Kilometer)) || profile.expenseRates.Kilometer);
+  const spesen = Number(window.prompt("Spesen pro Tag/Eintrag", String(profile.expenseRates.Spesen)) || profile.expenseRates.Spesen);
+  const fahrstunden = Number(window.prompt("Fahrstunden-Satz", String(profile.expenseRates.Fahrstunden)) || profile.expenseRates.Fahrstunden);
+  profile = { ...profile, name, unitRate, expenseRates: { ...profile.expenseRates, Kilometer: kilometer, Spesen: spesen, Fahrstunden: fahrstunden } };
+  projects = projects.map((project) => ({ ...project, ratePerUnit: unitRate }));
+  persistProfile();
+  persist();
+  render();
+  showToast("Profil gespeichert");
+}
+
+function addExpense() {
+  const value = Number(expenseAmount.value || 0);
+  if (!value) {
+    showToast("Wert fehlt");
+    return;
+  }
+  const project = activeProject();
+  const rate = Number(profile.expenseRates[expenseType.value] || 0);
+  const amount = rate && ["Kilometer", "Fahrstunden", "Spesen"].includes(expenseType.value) ? value * rate : value;
+  projects = projects.map((item) =>
+    item.id === project.id
+      ? { ...item, expenses: [...item.expenses, { id: `E-${Date.now()}`, type: expenseType.value, amount, quantity: value, rate }] }
+      : item,
+  );
+  expenseAmount.value = "";
+  persist();
+  render();
+  showToast("Kosten hinzugefügt");
+}
+
 function formatCurrency(value) {
   return new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(Number(value || 0));
 }
@@ -638,12 +874,109 @@ function renderExpenseList(project = activeProject()) {
       .map(
         (expense) => `
           <article class="expense-item">
-            <div><strong>${expense.type}</strong><span>${formatCurrency(expense.amount)}</span></div>
+            <div><strong>${e(expense.type)}</strong><span>${expense.quantity && expense.rate ? `${expense.quantity} x ${formatCurrency(expense.rate)} = ` : ""}${formatCurrency(expense.amount)}</span></div>
             <button type="button" data-delete-expense="${expense.id}">Löschen</button>
           </article>
         `,
       )
       .join("") || `<p class="empty-state">Noch keine Spesen/Kosten im Projekt.</p>`;
+}
+
+async function syncAirtable() {
+  const project = activeProject();
+  showToast("Airtable wird geladen...");
+  try {
+    const response = await fetch(`/api/airtable?station=${encodeURIComponent(project.activeStation)}`);
+    if (!response.ok) throw new Error("sync unavailable");
+    const payload = await response.json();
+    const incoming = Array.isArray(payload.damages) ? payload.damages : [];
+    const byId = new Map(damages.map((damage) => [damage.id, damage]));
+    incoming.forEach((damage) => {
+      const existing = byId.get(damage.id);
+      byId.set(damage.id, existing ? { ...existing, ...damage, comment: existing.comment || damage.comment || "", orderComment: existing.orderComment || damage.orderComment || "" } : damage);
+    });
+    damages = [...byId.values()];
+    hydrateDamageMetadata();
+    persist();
+    render();
+    showToast(`${incoming.length} Airtable-Schäden aktualisiert`);
+  } catch {
+    showToast("Airtable ist noch nicht verbunden");
+  }
+}
+
+function exportDocument(type) {
+  const project = activeProject();
+  const rows = projectDamages(project);
+  const units = rows.reduce((sum, damage) => sum + Number(damage.units || 0), 0);
+  const expenses = project.expenses.reduce((sum, item) => sum + Number(item.amount || 0), 0);
+  const revenue = units * Number(project.ratePerUnit || profile.unitRate || 0);
+  const title = type === "report" ? `RS ${project.activeStation} Report ${project.period}` : `Rechnung ${project.name}`;
+  const reportRows = rows
+    .map(
+      (damage) => `
+        <tr>
+          <td class="id">${e(damage.id)}</td>
+          <td>${e(damage.plate)}</td>
+          <td>${e(damage.description)}</td>
+          <td>${e(damage.comment || "")}</td>
+          <td>${e(damage.orderComment || damage.orderStatus || "")}</td>
+          <td class="status ${statusType(damage.status)}">${e(damage.status)}</td>
+          ${type === "invoice" ? `<td>${damage.units || 0}</td><td>${formatCurrency(Number(damage.units || 0) * Number(project.ratePerUnit || profile.unitRate || 0))}</td>` : ""}
+        </tr>
+      `,
+    )
+    .join("");
+  const expenseRows = project.expenses
+    .map((expense) => `<tr><td colspan="6">${e(expense.type)}</td><td>${e(expense.quantity || "")}</td><td>${formatCurrency(expense.amount)}</td></tr>`)
+    .join("");
+  const html = `
+    <!doctype html>
+    <html lang="de">
+      <head>
+        <meta charset="utf-8" />
+        <title>${e(title)}</title>
+        <style>
+          body { font-family: Arial, sans-serif; color: #111; margin: 34px; }
+          h1 { text-align: center; font-size: 18px; font-weight: 500; margin: 0 0 18px; }
+          table { width: 100%; border-collapse: collapse; font-size: 12px; }
+          th { background: #c9c9c9; text-align: left; }
+          th, td { border: 1px solid #aaa; padding: 6px; vertical-align: top; }
+          td.id { background: #ddd; font-weight: 700; text-align: right; }
+          .status.done { background: #b9ec9a; }
+          .status.blocked { background: #ff9c8c; }
+          .status.partial { background: #fff99b; }
+          .summary { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 16px; }
+          .summary div { border: 1px solid #aaa; padding: 8px; }
+          @media print { button { display: none; } body { margin: 18mm; } }
+        </style>
+      </head>
+      <body>
+        <button onclick="window.print()">PDF speichern / drucken</button>
+        <h1>${e(title)}</h1>
+        ${
+          type === "invoice"
+            ? `<section class="summary"><div>Einheiten<br><strong>${units}</strong></div><div>Umsatz<br><strong>${formatCurrency(revenue)}</strong></div><div>Kosten<br><strong>${formatCurrency(expenses)}</strong></div><div>Gewinn<br><strong>${formatCurrency(revenue - expenses)}</strong></div></section>`
+            : ""
+        }
+        <table>
+          <thead>
+            <tr>
+              <th>Damage ID</th><th>Plate</th><th>Damage</th><th>Comment</th><th>Needs Order</th><th>Status</th>${type === "invoice" ? "<th>Einheiten</th><th>Betrag</th>" : ""}
+            </tr>
+          </thead>
+          <tbody>${reportRows}${type === "invoice" ? expenseRows : ""}</tbody>
+        </table>
+      </body>
+    </html>
+  `;
+  const popup = window.open("", "_blank");
+  if (!popup) {
+    showToast("Popup blockiert");
+    return;
+  }
+  popup.document.write(html);
+  popup.document.close();
 }
 
 function createProject() {
@@ -707,22 +1040,6 @@ function deleteProject() {
   showToast("Projekt gelöscht");
 }
 
-function addExpense() {
-  const amount = Number(expenseAmount.value || 0);
-  if (!amount) {
-    showToast("Betrag fehlt");
-    return;
-  }
-  const project = activeProject();
-  projects = projects.map((item) =>
-    item.id === project.id ? { ...item, expenses: [...item.expenses, { id: `E-${Date.now()}`, type: expenseType.value, amount }] } : item,
-  );
-  expenseAmount.value = "";
-  persist();
-  render();
-  showToast("Spesen hinzugefügt");
-}
-
 function render() {
   renderProjectControls();
   renderDashboard();
@@ -734,6 +1051,15 @@ function render() {
 document.addEventListener("click", (event) => {
   const nav = event.target.closest(".nav-item");
   if (nav) setView(nav.dataset.view);
+
+  const menuAction = event.target.closest("[data-menu-action]");
+  if (menuAction) {
+    appMenu.hidden = true;
+    if (menuAction.dataset.menuAction === "profile") editProfile();
+    if (menuAction.dataset.menuAction === "sync") syncAirtable();
+    if (menuAction.dataset.menuAction === "login") showToast("Login wird mit Airtable-Sync vorbereitet");
+    if (menuAction.dataset.menuAction === "logout") showToast("Abgemeldet auf diesem Gerät");
+  }
 
   const station = event.target.closest("[data-station]");
   if (station) {
@@ -756,14 +1082,40 @@ document.addEventListener("click", (event) => {
     renderList();
   }
 
+  const sourceFilter = event.target.closest("[data-source-filter]");
+  if (sourceFilter) {
+    activeSourceFilter = sourceFilter.dataset.sourceFilter;
+    document.querySelectorAll("[data-source-filter]").forEach((button) => button.classList.toggle("selected", button === sourceFilter));
+    renderList();
+    renderSourceList();
+  }
+
+  const sourceToggle = event.target.closest("[data-toggle-source]");
+  if (sourceToggle) {
+    const key = sourceToggle.dataset.toggleSource;
+    if (collapsedSourceGroups.has(key)) collapsedSourceGroups.delete(key);
+    else collapsedSourceGroups.add(key);
+    renderSourceList();
+  }
+
   const row = event.target.closest("[data-damage-id], [data-open-detail]");
   if (row) {
+    damageScrollY = window.scrollY;
     selectedId = row.dataset.damageId || row.dataset.openDetail;
+    setView("detail");
+  }
+
+  const previewButton = event.target.closest("[data-preview-damage]");
+  if (previewButton) {
+    damageScrollY = window.scrollY;
+    selectedId = previewButton.dataset.previewDamage;
     setView("detail");
   }
 
   const importButton = event.target.closest("[data-import-damage]");
   if (importButton) importDamage(importButton.dataset.importDamage);
+
+  if (event.target.closest("#backToDamages")) setView("damages");
 
   const deleteExpense = event.target.closest("[data-delete-expense]");
   if (deleteExpense) {
@@ -786,6 +1138,7 @@ document.addEventListener("click", (event) => {
     updateDamage(selectedId, {
       status: document.querySelector("#detailStatus").value,
       comment: document.querySelector("#detailComment").value.trim(),
+      orderComment: document.querySelector("#orderComment").value.trim(),
       sourceActive: false,
     });
     showToast("Schaden im Projekt gesichert");
@@ -794,11 +1147,20 @@ document.addEventListener("click", (event) => {
 
 projectSelect.addEventListener("change", () => setProject(projectSelect.value));
 stationSelect.addEventListener("change", () => setProjectStation(stationSelect.value));
-searchInput.addEventListener("input", renderList);
+searchInput.addEventListener("input", () => {
+  renderList();
+  renderSourceList();
+});
+menuButton.addEventListener("click", () => {
+  appMenu.hidden = !appMenu.hidden;
+});
+manualDamageButton.addEventListener("click", createManualDamage);
 newProjectButton.addEventListener("click", createProject);
 editProjectButton.addEventListener("click", editProject);
 deleteProjectButton.addEventListener("click", deleteProject);
 addExpenseButton.addEventListener("click", addExpense);
+exportInvoiceButton.addEventListener("click", () => exportDocument("invoice"));
+exportReportButton.addEventListener("click", () => exportDocument("report"));
 
 saveInvoiceNote.addEventListener("click", () => {
   localStorage.setItem(`${noteKey}:${activeProjectId}`, invoiceNote.value.trim());
